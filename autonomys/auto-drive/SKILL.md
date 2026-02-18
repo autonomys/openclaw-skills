@@ -13,6 +13,11 @@ metadata:
         formula: jq
         bins: ["jq"]
         label: "Install jq (brew)"
+      - id: pwsh-winget
+        kind: winget
+        package: Microsoft.PowerShell
+        bins: ["pwsh"]
+        label: "Install PowerShell 7 (Windows)"
 ---
 
 # Auto-Drive Skill
@@ -53,6 +58,8 @@ Set the key via environment variable or OpenClaw config:
 The API key is required for uploading, saving memories, and recalling the memory chain. It is optional for general file downloads — without it, the public gateway is used and files are returned as stored (i.e. compressed files will not be decompressed).
 
 ## Core Operations
+
+> **Note:** Each command below shows the bash form; replace `.sh` with `.ps1` and `--flag` with `-Flag` for PowerShell.
 
 ### Upload a File
 
@@ -163,8 +170,9 @@ If the agent's server dies, a new instance only needs the last CID to walk the e
 
 ## Important Notes
 
+- **Platform requirement:** Bash scripts require Unix (Linux/macOS) and depend on `curl`, `jq`, and `file`. Equivalent `.ps1` scripts are available for Windows users with PowerShell 7 (`pwsh`) — no external dependencies needed.
 - All data stored on Auto-Drive is **permanent and public** by default. Do not store secrets, private keys, or sensitive personal data.
-- The free API key has a **20 MB per month upload limit** on mainnet. Downloads are unlimited. Check remaining credits via `GET /subscriptions/credits`.
+- The free API key has a **20 MB per month upload limit** on mainnet. Downloads are unlimited. Check account info and remaining credits via `GET /accounts/@me`.
 - An API key is required for uploads, memory saves, and chain recall. General file downloads work without one via the public gateway, but compressed files will not be decompressed.
 - The memory state file tracks `lastCid`, `lastUploadTimestamp`, and `chainLength`. Back up the `lastCid` value — it's your resurrection key.
 - Files are uploaded in a single chunk. The free tier's 20 MB/month limit is effectively a per-file ceiling — keep individual uploads well under that to preserve your monthly budget.

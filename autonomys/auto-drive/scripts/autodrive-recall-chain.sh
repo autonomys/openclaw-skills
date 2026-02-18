@@ -95,11 +95,12 @@ while [[ -n "$CID" && "$CID" != "null" && $COUNT -lt $LIMIT ]]; do
   fi
   VISITED="$VISITED|$CID|"
 
-  # Download via authenticated API (handles decompression server-side)
+  # Download via authenticated API (handles decompression server-side), fall back to public gateway
   EXPERIENCE=$(curl -sS --fail \
     "$API_BASE/objects/$CID/download" \
     -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
     -H "X-Auth-Provider: apikey" 2>/dev/null \
+    || curl -sS --fail "https://gateway.autonomys.xyz/file/$CID" 2>/dev/null \
     || true)
 
   if [[ -z "$EXPERIENCE" ]]; then

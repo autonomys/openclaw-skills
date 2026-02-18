@@ -9,6 +9,8 @@
 
 set -euo pipefail
 
+API_BASE="https://mainnet.auto-drive.autonomys.xyz/api"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INPUT="${1:?Usage: autodrive-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]}"
 AGENT_NAME="${AGENT_NAME:-openclaw-agent}"
@@ -89,6 +91,20 @@ if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
   echo "Error: Invalid CID format returned: $CID" >&2
   exit 1
 fi
+
+# Verify the upload is accessible before updating state — prevents chain corruption
+# if the API returns a CID for malformed/incomplete data that can't be retrieved later
+echo "Verifying upload is accessible..." >&2
+VERIFY_HTTP=$(curl -sS -o /dev/null -w "%{http_code}" \
+  "$API_BASE/objects/$CID/download" \
+  -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
+  -H "X-Auth-Provider: apikey" 2>/dev/null || echo "000")
+if [[ "$VERIFY_HTTP" -lt 200 || "$VERIFY_HTTP" -ge 300 ]]; then
+  echo "Error: Post-upload verification failed (HTTP $VERIFY_HTTP) — CID $CID is not accessible" >&2
+  echo "State not updated to prevent chain corruption." >&2
+  exit 1
+fi
+echo "Verified accessible." >&2
 
 # Update state file
 NEW_LENGTH=$((CHAIN_LENGTH + 1))
