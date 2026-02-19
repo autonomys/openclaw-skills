@@ -49,14 +49,15 @@ Response: {"cid": "<cid>"}
 ### Via API (authenticated)
 
 ```
-GET /objects/<cid>/download
-Response: binary stream
+GET /downloads/<cid>
+Response: binary stream (decompresses server-side if compressed)
 ```
 
 ### Via Gateway (public, no auth needed)
 
 ```
 GET https://gateway.autonomys.xyz/file/<cid>
+Note: No decompression — files returned as stored.
 ```
 
 ## Object Operations

@@ -33,7 +33,7 @@ download_to_file() {
 if [[ -z "$OUTPUT" ]]; then
   # Output to stdout — keep it simple, use --fail for error detection
   if [[ -n "${AUTO_DRIVE_API_KEY:-}" ]]; then
-    curl -sS --fail "$API_BASE/objects/$CID/download" \
+    curl -sS --fail "$API_BASE/downloads/$CID" \
       -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
       -H "X-Auth-Provider: apikey" \
       || curl -sS --fail "$GATEWAY/file/$CID"
@@ -43,7 +43,7 @@ if [[ -z "$OUTPUT" ]]; then
 else
   # Output to file — check HTTP codes for proper error reporting
   if [[ -n "${AUTO_DRIVE_API_KEY:-}" ]]; then
-    HTTP_CODE=$(download_to_file "$API_BASE/objects/$CID/download" "$OUTPUT" auth)
+    HTTP_CODE=$(download_to_file "$API_BASE/downloads/$CID" "$OUTPUT" auth)
     if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]]; then
       echo "Saved to: $OUTPUT" >&2
     else

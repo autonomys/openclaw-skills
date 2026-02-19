@@ -95,15 +95,17 @@ while [[ -n "$CID" && "$CID" != "null" && $COUNT -lt $LIMIT ]]; do
   fi
   VISITED="$VISITED|$CID|"
 
-  # Download via authenticated API (handles decompression server-side)
+  # Download via authenticated API (handles decompression server-side).
+  # Fall back to public gateway if the API fails for any reason.
   EXPERIENCE=$(curl -sS --fail \
-    "$API_BASE/objects/$CID/download" \
+    "$API_BASE/downloads/$CID" \
     -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
     -H "X-Auth-Provider: apikey" 2>/dev/null \
+    || curl -sS --fail "https://gateway.autonomys.xyz/file/$CID" 2>/dev/null \
     || true)
 
   if [[ -z "$EXPERIENCE" ]]; then
-    echo "Error: Failed to download CID $CID — chain broken at depth $((COUNT + 1))" >&2
+    echo "Error: Failed to download CID $CID via API and gateway — chain broken at depth $((COUNT + 1))" >&2
     break
   fi
 
