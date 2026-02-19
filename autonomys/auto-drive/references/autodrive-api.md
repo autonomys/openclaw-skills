@@ -2,7 +2,8 @@
 
 ## Base URLs
 
-- **API (requires key):** `https://mainnet.auto-drive.autonomys.xyz/api`
+- **API (uploads, objects, accounts - requires key):** `https://mainnet.auto-drive.autonomys.xyz/api`
+- **Download API:** `https://public.auto-drive.autonomys.xyz/api`
 - **Public Gateway (no key):** `https://gateway.autonomys.xyz`
 - **Dashboard & Key Management:** `https://ai3.storage` — sign in with Google/GitHub, then Developers → Create API Key
 
@@ -46,17 +47,20 @@ Response: {"cid": "<cid>"}
 
 ## Download
 
-### Via API (authenticated)
+### Via Download API
 
 ```
-GET /objects/<cid>/download
-Response: binary stream
+GET https://public.auto-drive.autonomys.xyz/api/downloads/<cid>
+Response: binary stream (decompresses server-side if compressed)
+Note: Auth is optional. Authenticated requests get user-level access; unauthenticated
+      requests are limited to ~100 MiB per file (exact limit may vary).
 ```
 
 ### Via Gateway (public, no auth needed)
 
 ```
 GET https://gateway.autonomys.xyz/file/<cid>
+Note: No decompression — files returned as stored.
 ```
 
 ## Object Operations
@@ -79,25 +83,9 @@ GET /accounts/@me
 Returns: account info, limits, credits
 ```
 
-## Subscription
-
-### Get subscription info
-
-```
-GET /subscriptions/info
-Returns: plan details, usage limits
-```
-
-### Check credits
-
-```
-GET /subscriptions/credits
-Returns: { upload: number, download: number }
-```
-
 ## Free Tier Limits
 
-The free API key from ai3.storage includes a **20 MB per month upload limit** on mainnet. Downloads via the public gateway are unlimited. If uploads start failing mid-month, the agent has likely hit this cap. The agent can check remaining credits via `GET /subscriptions/credits`.
+The free API key from ai3.storage includes a **20 MB per month upload limit** on mainnet. Downloads via the public gateway are unlimited. If uploads start failing mid-month, the agent has likely hit this cap. The agent can check remaining credits via `GET /accounts/@me`.
 
 ## CIDs (Content Identifiers)
 

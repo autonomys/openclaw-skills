@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-API_BASE="https://mainnet.auto-drive.autonomys.xyz/api"
+DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
 
 # First arg can be a CID or a flag — if no CID given, try state file
 CID=""
@@ -95,15 +95,42 @@ while [[ -n "$CID" && "$CID" != "null" && $COUNT -lt $LIMIT ]]; do
   fi
   VISITED="$VISITED|$CID|"
 
-  # Download via authenticated API (handles decompression server-side)
+  # Download via authenticated API (handles decompression server-side).
   EXPERIENCE=$(curl -sS --fail \
-    "$API_BASE/objects/$CID/download" \
+    "$DOWNLOAD_API/downloads/$CID" \
     -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
     -H "X-Auth-Provider: apikey" 2>/dev/null \
     || true)
 
+  # Fall back to public gateway if the API fails.
+  # Memories are uploaded with --compress (ZLIB), and the gateway returns raw bytes,
+  # so we must decompress client-side. Pipe curl directly into the decompressor to
+  # avoid bash variables stripping null bytes from the binary stream.
+  if [[ -z "$EXPERIENCE" ]] || ! echo "$EXPERIENCE" | jq empty 2>/dev/null; then
+    GATEWAY_URL="https://gateway.autonomys.xyz/file/$CID"
+    # Try as JSON first (uncompressed files are safe in bash variables)
+    EXPERIENCE=$(curl -sS --fail "$GATEWAY_URL" 2>/dev/null || true)
+    if [[ -n "$EXPERIENCE" ]] && echo "$EXPERIENCE" | jq empty 2>/dev/null; then
+      echo "[$COUNT] Fetched $CID via gateway" >&2
+    else
+      # ZLIB compressed — pipe curl directly into decompressor (no intermediate variable)
+      EXPERIENCE=""
+      if command -v python3 &>/dev/null; then
+        EXPERIENCE=$(curl -sS --fail "$GATEWAY_URL" 2>/dev/null \
+          | python3 -c "import sys,zlib;sys.stdout.buffer.write(zlib.decompress(sys.stdin.buffer.read()))" 2>/dev/null || true)
+      fi
+      if [[ -z "$EXPERIENCE" ]] && command -v perl &>/dev/null; then
+        EXPERIENCE=$(curl -sS --fail "$GATEWAY_URL" 2>/dev/null \
+          | perl -MCompress::Zlib -e 'undef $/;my $d=uncompress(<STDIN>);print $d if defined $d' 2>/dev/null || true)
+      fi
+      if [[ -n "$EXPERIENCE" ]]; then
+        echo "[$COUNT] Fetched $CID via gateway (decompressed client-side)" >&2
+      fi
+    fi
+  fi
+
   if [[ -z "$EXPERIENCE" ]]; then
-    echo "Error: Failed to download CID $CID — chain broken at depth $((COUNT + 1))" >&2
+    echo "Error: Failed to download CID $CID via API and gateway — chain broken at depth $((COUNT + 1))" >&2
     break
   fi
 
