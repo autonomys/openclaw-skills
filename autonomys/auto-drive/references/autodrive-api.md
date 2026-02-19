@@ -90,7 +90,10 @@ Returns: plan details, usage limits
 
 ### Check credits
 
-> **Note:** `GET /subscriptions/credits` returns 404. Use `GET /accounts/@me` instead — it returns account info including limits and credits.
+```
+GET /accounts/@me
+Returns: account info including limits and credits
+```
 
 ## Free Tier Limits
 
