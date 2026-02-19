@@ -16,7 +16,7 @@ if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
 fi
 
 GATEWAY="https://gateway.autonomys.xyz"
-API_BASE="https://mainnet.auto-drive.autonomys.xyz/api"
+DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
 
 download_to_file() {
   local URL="$1" DEST="$2" AUTH="${3:-}"
@@ -33,7 +33,7 @@ download_to_file() {
 if [[ -z "$OUTPUT" ]]; then
   # Output to stdout — keep it simple, use --fail for error detection
   if [[ -n "${AUTO_DRIVE_API_KEY:-}" ]]; then
-    curl -sS --fail "$API_BASE/downloads/$CID" \
+    curl -sS --fail "$DOWNLOAD_API/downloads/$CID" \
       -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
       -H "X-Auth-Provider: apikey" \
       || curl -sS --fail "$GATEWAY/file/$CID"
@@ -43,7 +43,7 @@ if [[ -z "$OUTPUT" ]]; then
 else
   # Output to file — check HTTP codes for proper error reporting
   if [[ -n "${AUTO_DRIVE_API_KEY:-}" ]]; then
-    HTTP_CODE=$(download_to_file "$API_BASE/downloads/$CID" "$OUTPUT" auth)
+    HTTP_CODE=$(download_to_file "$DOWNLOAD_API/downloads/$CID" "$OUTPUT" auth)
     if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]]; then
       echo "Saved to: $OUTPUT" >&2
     else

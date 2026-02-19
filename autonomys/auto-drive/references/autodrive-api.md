@@ -2,7 +2,8 @@
 
 ## Base URLs
 
-- **API (requires key):** `https://mainnet.auto-drive.autonomys.xyz/api`
+- **API (uploads, objects, accounts - requires key):** `https://mainnet.auto-drive.autonomys.xyz/api`
+- **Download API:** `https://public.auto-drive.autonomys.xyz/api`
 - **Public Gateway (no key):** `https://gateway.autonomys.xyz`
 - **Dashboard & Key Management:** `https://ai3.storage` — sign in with Google/GitHub, then Developers → Create API Key
 
@@ -46,10 +47,10 @@ Response: {"cid": "<cid>"}
 
 ## Download
 
-### Via API (authenticated)
+### Via Download API
 
 ```
-GET /downloads/<cid>
+GET https://public.auto-drive.autonomys.xyz/api/downloads/<cid>
 Response: binary stream (decompresses server-side if compressed)
 ```
 
