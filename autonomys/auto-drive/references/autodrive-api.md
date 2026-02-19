@@ -52,6 +52,8 @@ Response: {"cid": "<cid>"}
 ```
 GET https://public.auto-drive.autonomys.xyz/api/downloads/<cid>
 Response: binary stream (decompresses server-side if compressed)
+Note: Auth is optional. Authenticated requests get user-level access; unauthenticated
+      requests are limited to ~100 MiB per file (exact limit may vary).
 ```
 
 ### Via Gateway (public, no auth needed)
