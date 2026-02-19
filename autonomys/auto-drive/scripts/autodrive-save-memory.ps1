@@ -113,7 +113,7 @@ $VerifyHeaders = @{
     "X-Auth-Provider" = "apikey"
 }
 try {
-    $null = Invoke-WebRequest -Uri "$ApiBase/objects/$Cid/download" -Headers $VerifyHeaders
+    $null = Invoke-WebRequest -Uri "$ApiBase/downloads/$Cid" -Headers $VerifyHeaders
 } catch {
     [Console]::Error.WriteLine("Error: Post-upload verification failed — CID $Cid is not accessible")
     [Console]::Error.WriteLine("State not updated to prevent chain corruption.")

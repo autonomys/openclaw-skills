@@ -96,7 +96,7 @@ fi
 # if the API returns a CID for malformed/incomplete data that can't be retrieved later
 echo "Verifying upload is accessible..." >&2
 VERIFY_HTTP=$(curl -sS -o /dev/null -w "%{http_code}" \
-  "$API_BASE/objects/$CID/download" \
+  "$API_BASE/downloads/$CID" \
   -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
   -H "X-Auth-Provider: apikey" 2>/dev/null || echo "000")
 if [[ "$VERIFY_HTTP" -lt 200 || "$VERIFY_HTTP" -ge 300 ]]; then

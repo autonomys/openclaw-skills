@@ -46,12 +46,14 @@ Response: {"cid": "<cid>"}
 
 ## Download
 
-### Via API (authenticated)
+### Via API (auth optional)
 
 ```
-GET /objects/<cid>/download
-Response: binary stream
+GET /downloads/<cid>
+Response: binary stream (decompresses server-side)
 ```
+
+Auth is optional — authenticated requests get user-level access; unauthenticated requests use anonymous access. Both paths handle decompression. Pass `?ignoreEncoding=true` to receive the raw compressed stream.
 
 ### Via Gateway (public, no auth needed)
 
@@ -77,22 +79,6 @@ GET https://gateway.autonomys.xyz/file/<cid>
 ```
 GET /accounts/@me
 Returns: account info, limits, credits
-```
-
-## Subscription
-
-### Get subscription info
-
-```
-GET /subscriptions/info
-Returns: plan details, usage limits
-```
-
-### Check credits
-
-```
-GET /accounts/@me
-Returns: account info including limits and credits
 ```
 
 ## Free Tier Limits

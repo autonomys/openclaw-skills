@@ -30,18 +30,10 @@ $AuthHeaders = @{
 if (-not $OutputPath) {
     # Output raw bytes to stdout (handles both text and binary content)
     $Response = $null
-    if ($ApiKey) {
-        try {
-            $Response = Invoke-WebRequest -Uri "$ApiBase/objects/$Cid/download" -Headers $AuthHeaders
-        } catch {
-            try {
-                $Response = Invoke-WebRequest -Uri "$Gateway/file/$Cid"
-            } catch {
-                [Console]::Error.WriteLine("Error: Download failed — $($_.Exception.Message)")
-                exit 1
-            }
-        }
-    } else {
+    $ApiHeaders = if ($ApiKey) { $AuthHeaders } else { @{} }
+    try {
+        $Response = Invoke-WebRequest -Uri "$ApiBase/downloads/$Cid" -Headers $ApiHeaders
+    } catch {
         try {
             $Response = Invoke-WebRequest -Uri "$Gateway/file/$Cid"
         } catch {
@@ -56,7 +48,7 @@ if (-not $OutputPath) {
     # Output to file
     if ($ApiKey) {
         try {
-            Invoke-WebRequest -Uri "$ApiBase/objects/$Cid/download" `
+            Invoke-WebRequest -Uri "$ApiBase/downloads/$Cid" `
                 -Headers $AuthHeaders `
                 -OutFile $OutputPath
             [Console]::Error.WriteLine("Saved to: $OutputPath")

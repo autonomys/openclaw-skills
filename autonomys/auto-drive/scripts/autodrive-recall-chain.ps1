@@ -74,7 +74,7 @@ while ($Cid -and $Cid -ne 'null' -and $Count -lt $Limit) {
     # Download: try authenticated API first (handles decompression), fall back to gateway
     $ExperienceRaw = $null
     try {
-        $ExperienceRaw = Invoke-RestMethod -Uri "$ApiBase/objects/$Cid/download" `
+        $ExperienceRaw = Invoke-RestMethod -Uri "$ApiBase/downloads/$Cid" `
             -Headers $AuthHeaders
     } catch {
         try {
