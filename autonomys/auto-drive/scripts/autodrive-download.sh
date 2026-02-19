@@ -21,9 +21,8 @@ DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
 
 download_to_file() {
   local URL="$1" DEST="$2"
-  RESPONSE=$(curl -sS -w "\n%{http_code}" "$URL" \
-    "${AUTH_ARGS[@]}" \
-    -o "$DEST")
+  shift 2
+  RESPONSE=$(curl -sS -w "\n%{http_code}" "$URL" "$@" -o "$DEST")
   echo "$RESPONSE" | tail -1
 }
 
@@ -40,7 +39,7 @@ if [[ -z "$OUTPUT" ]]; then
     || curl -sS --fail "$GATEWAY/file/$CID"
 else
   # Output to file — check HTTP codes for proper error reporting
-  HTTP_CODE=$(download_to_file "$DOWNLOAD_API/downloads/$CID" "$OUTPUT")
+  HTTP_CODE=$(download_to_file "$DOWNLOAD_API/downloads/$CID" "$OUTPUT" "${AUTH_ARGS[@]}")
   if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]]; then
     echo "Saved to: $OUTPUT" >&2
   else
