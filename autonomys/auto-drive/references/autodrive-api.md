@@ -80,25 +80,9 @@ GET /accounts/@me
 Returns: account info, limits, credits
 ```
 
-## Subscription
-
-### Get subscription info
-
-```
-GET /subscriptions/info
-Returns: plan details, usage limits
-```
-
-### Check credits
-
-```
-GET /subscriptions/credits
-Returns: { upload: number, download: number }
-```
-
 ## Free Tier Limits
 
-The free API key from ai3.storage includes a **20 MB per month upload limit** on mainnet. Downloads via the public gateway are unlimited. If uploads start failing mid-month, the agent has likely hit this cap. The agent can check remaining credits via `GET /subscriptions/credits`.
+The free API key from ai3.storage includes a **20 MB per month upload limit** on mainnet. Downloads via the public gateway are unlimited. If uploads start failing mid-month, the agent has likely hit this cap. The agent can check remaining credits via `GET /accounts/@me`.
 
 ## CIDs (Content Identifiers)
 
