@@ -104,25 +104,27 @@ while [[ -n "$CID" && "$CID" != "null" && $COUNT -lt $LIMIT ]]; do
 
   # Fall back to public gateway if the API fails.
   # Memories are uploaded with --compress (ZLIB), and the gateway returns raw bytes,
-  # so we must decompress client-side. Try python3 first, then perl (core since 5.9.3).
+  # so we must decompress client-side. Pipe curl directly into the decompressor to
+  # avoid bash variables stripping null bytes from the binary stream.
   if [[ -z "$EXPERIENCE" ]] || ! echo "$EXPERIENCE" | jq empty 2>/dev/null; then
-    RAW=$(curl -sS --fail "https://gateway.autonomys.xyz/file/$CID" 2>/dev/null || true)
-    if [[ -n "$RAW" ]]; then
-      # Try parsing as JSON first (in case it wasn't compressed)
-      if echo "$RAW" | jq empty 2>/dev/null; then
-        EXPERIENCE="$RAW"
-        echo "[$COUNT] Fetched $CID via gateway" >&2
-      else
-        # ZLIB decompress: try python3, fall back to perl (Compress::Zlib is a core module)
-        if command -v python3 &>/dev/null; then
-          EXPERIENCE=$(echo "$RAW" | python3 -c "import sys,zlib;sys.stdout.buffer.write(zlib.decompress(sys.stdin.buffer.read()))" 2>/dev/null || true)
-        fi
-        if [[ -z "$EXPERIENCE" ]] && command -v perl &>/dev/null; then
-          EXPERIENCE=$(echo "$RAW" | perl -MCompress::Zlib -e 'undef $/;my $d=uncompress(<STDIN>);print $d if defined $d' 2>/dev/null || true)
-        fi
-        if [[ -n "$EXPERIENCE" ]]; then
-          echo "[$COUNT] Fetched $CID via gateway (decompressed client-side)" >&2
-        fi
+    GATEWAY_URL="https://gateway.autonomys.xyz/file/$CID"
+    # Try as JSON first (uncompressed files are safe in bash variables)
+    EXPERIENCE=$(curl -sS --fail "$GATEWAY_URL" 2>/dev/null || true)
+    if [[ -n "$EXPERIENCE" ]] && echo "$EXPERIENCE" | jq empty 2>/dev/null; then
+      echo "[$COUNT] Fetched $CID via gateway" >&2
+    else
+      # ZLIB compressed — pipe curl directly into decompressor (no intermediate variable)
+      EXPERIENCE=""
+      if command -v python3 &>/dev/null; then
+        EXPERIENCE=$(curl -sS --fail "$GATEWAY_URL" 2>/dev/null \
+          | python3 -c "import sys,zlib;sys.stdout.buffer.write(zlib.decompress(sys.stdin.buffer.read()))" 2>/dev/null || true)
+      fi
+      if [[ -z "$EXPERIENCE" ]] && command -v perl &>/dev/null; then
+        EXPERIENCE=$(curl -sS --fail "$GATEWAY_URL" 2>/dev/null \
+          | perl -MCompress::Zlib -e 'undef $/;my $d=uncompress(<STDIN>);print $d if defined $d' 2>/dev/null || true)
+      fi
+      if [[ -n "$EXPERIENCE" ]]; then
+        echo "[$COUNT] Fetched $CID via gateway (decompressed client-side)" >&2
       fi
     fi
   fi
