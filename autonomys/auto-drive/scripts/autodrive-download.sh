@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Download a file from Auto-Drive by CID
 # Usage: autodrive-download.sh <cid> [output_path]
-# Downloads via API if AUTO_DRIVE_API_KEY is set, otherwise via public gateway.
+# Tries the authenticated API first (handles server-side decompression); falls back to
+# the public gateway if the API fails. If no API key is set, uses the gateway directly.
 # If output_path is omitted, outputs to stdout.
 
 set -euo pipefail
@@ -35,7 +36,7 @@ if [[ -z "$OUTPUT" ]]; then
   if [[ -n "${AUTO_DRIVE_API_KEY:-}" ]]; then
     curl -sS --fail "$API_BASE/objects/$CID/download" \
       -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
-      -H "X-Auth-Provider: apikey" \
+      -H "X-Auth-Provider: apikey" 2>/dev/null \
       || curl -sS --fail "$GATEWAY/file/$CID"
   else
     curl -sS --fail "$GATEWAY/file/$CID"

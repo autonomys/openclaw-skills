@@ -1,7 +1,8 @@
 #Requires -Version 7.0
 # Download a file from Auto-Drive by CID
 # Usage: autodrive-download.ps1 <Cid> [-OutputPath <path>]
-# Downloads via API if AUTO_DRIVE_API_KEY is set, otherwise via public gateway.
+# Tries the authenticated API first (handles server-side decompression); falls back to
+# the public gateway if the API fails. If no API key is set, uses the gateway directly.
 # If OutputPath is omitted, outputs raw bytes to stdout.
 
 param(
