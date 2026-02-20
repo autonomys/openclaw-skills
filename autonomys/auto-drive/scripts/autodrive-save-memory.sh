@@ -9,6 +9,16 @@
 
 set -euo pipefail
 
+# Check required dependencies
+_missing=()
+command -v curl &>/dev/null || _missing+=(curl)
+command -v jq   &>/dev/null || _missing+=(jq)
+if [[ ${#_missing[@]} -gt 0 ]]; then
+  echo "Error: Missing required tools: ${_missing[*]}" >&2
+  echo "Install with: sudo apt install ${_missing[*]}" >&2
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INPUT="${1:?Usage: autodrive-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]}"
 AGENT_NAME="${AGENT_NAME:-openclaw-agent}"

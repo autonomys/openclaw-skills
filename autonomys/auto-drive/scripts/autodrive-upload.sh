@@ -6,6 +6,16 @@
 
 set -euo pipefail
 
+# Check required dependencies
+_missing=()
+command -v curl &>/dev/null || _missing+=(curl)
+command -v jq   &>/dev/null || _missing+=(jq)
+if [[ ${#_missing[@]} -gt 0 ]]; then
+  echo "Error: Missing required tools: ${_missing[*]}" >&2
+  echo "Install with: sudo apt install ${_missing[*]}" >&2
+  exit 1
+fi
+
 API_BASE="https://mainnet.auto-drive.autonomys.xyz/api"
 
 FILE_PATH="${1:?Usage: autodrive-upload.sh <file_path> [--json] [--compress]}"

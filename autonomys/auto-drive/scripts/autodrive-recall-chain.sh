@@ -6,6 +6,20 @@
 
 set -euo pipefail
 
+# Check required dependencies
+_missing=()
+command -v curl &>/dev/null || _missing+=(curl)
+command -v jq   &>/dev/null || _missing+=(jq)
+if [[ ${#_missing[@]} -gt 0 ]]; then
+  echo "Error: Missing required tools: ${_missing[*]}" >&2
+  echo "Install with: sudo apt install ${_missing[*]}" >&2
+  exit 1
+fi
+if ! command -v python3 &>/dev/null; then
+  echo "Warning: python3 not found — gateway decompression fallback may not work." >&2
+  echo "Install with: sudo apt install python3" >&2
+fi
+
 DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
 
 # First arg can be a CID or a flag — if no CID given, try state file

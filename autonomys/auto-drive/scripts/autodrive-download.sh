@@ -7,6 +7,13 @@
 
 set -euo pipefail
 
+# Check required dependencies
+if ! command -v curl &>/dev/null; then
+  echo "Error: Missing required tool: curl" >&2
+  echo "Install with: sudo apt install curl" >&2
+  exit 1
+fi
+
 CID="${1:?Usage: autodrive-download.sh <cid> [output_path]}"
 OUTPUT="${2:-}"
 
