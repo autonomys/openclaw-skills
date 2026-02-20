@@ -7,10 +7,28 @@
 
 set -euo pipefail
 
+# Platform-aware install hint
+_install_hint() {
+  case "$(uname -s 2>/dev/null)" in
+    Linux*)            echo "  Install: sudo apt install $*" >&2 ;;
+    Darwin*)           echo "  Install: brew install $*" >&2 ;;
+    MINGW*|MSYS*|CYGWIN*) echo "  Install: winget install $* OR choco install $*" >&2 ;;
+    *)                 echo "  Install: $*" >&2 ;;
+  esac
+}
+
+# Warn Git Bash users early — some tools may be missing or behave differently
+case "$(uname -s 2>/dev/null)" in
+  MINGW*|MSYS*|CYGWIN*)
+    echo "Note: Running in Git Bash. For full compatibility, consider using WSL." >&2
+    echo "WSL setup: https://learn.microsoft.com/en-us/windows/wsl/install" >&2
+    ;;
+esac
+
 # Check required dependencies
 if ! command -v curl &>/dev/null; then
   echo "Error: Missing required tool: curl" >&2
-  echo "Install with: sudo apt install curl" >&2
+  _install_hint curl
   exit 1
 fi
 

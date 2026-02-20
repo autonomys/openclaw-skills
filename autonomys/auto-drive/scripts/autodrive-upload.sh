@@ -6,13 +6,31 @@
 
 set -euo pipefail
 
+# Platform-aware install hint
+_install_hint() {
+  case "$(uname -s 2>/dev/null)" in
+    Linux*)            echo "  Install: sudo apt install $*" >&2 ;;
+    Darwin*)           echo "  Install: brew install $*" >&2 ;;
+    MINGW*|MSYS*|CYGWIN*) echo "  Install: winget install $* OR choco install $*" >&2 ;;
+    *)                 echo "  Install: $*" >&2 ;;
+  esac
+}
+
+# Warn Git Bash users early — some tools may be missing or behave differently
+case "$(uname -s 2>/dev/null)" in
+  MINGW*|MSYS*|CYGWIN*)
+    echo "Note: Running in Git Bash. For full compatibility, consider using WSL." >&2
+    echo "WSL setup: https://learn.microsoft.com/en-us/windows/wsl/install" >&2
+    ;;
+esac
+
 # Check required dependencies
 _missing=()
 command -v curl &>/dev/null || _missing+=(curl)
 command -v jq   &>/dev/null || _missing+=(jq)
 if [[ ${#_missing[@]} -gt 0 ]]; then
   echo "Error: Missing required tools: ${_missing[*]}" >&2
-  echo "Install with: sudo apt install ${_missing[*]}" >&2
+  _install_hint "${_missing[@]}"
   exit 1
 fi
 
@@ -44,7 +62,18 @@ FILENAME=$(basename "$FILE_PATH")
 if $IS_JSON; then
   MIME="application/json"
 else
-  MIME=$(file --mime-type -b "$FILE_PATH" 2>/dev/null || echo "application/octet-stream")
+  if command -v file &>/dev/null; then
+    MIME=$(file --mime-type -b "$FILE_PATH" 2>/dev/null || echo "application/octet-stream")
+  else
+    case "${FILE_PATH##*.}" in
+      json)     MIME="application/json" ;;
+      txt)      MIME="text/plain" ;;
+      pdf)      MIME="application/pdf" ;;
+      png)      MIME="image/png" ;;
+      jpg|jpeg) MIME="image/jpeg" ;;
+      *)        MIME="application/octet-stream" ;;
+    esac
+  fi
 fi
 
 AUTH_HEADERS=(-H "Authorization: Bearer $AUTO_DRIVE_API_KEY" -H "X-Auth-Provider: apikey")
