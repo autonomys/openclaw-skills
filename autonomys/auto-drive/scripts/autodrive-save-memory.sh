@@ -43,6 +43,8 @@ if [[ "$STATE_FILE_EXPLICIT" == true ]]; then
   fi
   if [[ "$STATE_FILE_CHECK" == "$HOME/"* ]]; then
     STATE_FILE_CHECK="$HOME_REAL/${STATE_FILE_CHECK#"$HOME/"}"
+  elif [[ "$STATE_FILE_CHECK" == "$HOME" ]]; then
+    STATE_FILE_CHECK="$HOME_REAL"
   fi
   # Resolve parent physically if it exists (catches symlinks).
   STATE_FILE_DIR="$(dirname "$STATE_FILE_CHECK")"
