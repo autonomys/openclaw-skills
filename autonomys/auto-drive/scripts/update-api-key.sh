@@ -62,7 +62,8 @@ echo -e "${GREEN}✓ Updated $CONFIG_FILE${NC}"
 # Update .env
 if [[ -f "$ENV_FILE" ]] && grep -q "^AUTO_DRIVE_API_KEY=" "$ENV_FILE" 2>/dev/null; then
   SEDTMP=$(mktemp)
-  sed "s|^AUTO_DRIVE_API_KEY=.*|AUTO_DRIVE_API_KEY=$API_KEY|" "$ENV_FILE" > "$SEDTMP" && mv "$SEDTMP" "$ENV_FILE"
+  ESCAPED_KEY=$(printf '%s' "$API_KEY" | sed 's/[|&\]/\\&/g')
+  sed "s|^AUTO_DRIVE_API_KEY=.*|AUTO_DRIVE_API_KEY=$ESCAPED_KEY|" "$ENV_FILE" > "$SEDTMP" && mv "$SEDTMP" "$ENV_FILE"
 else
   echo "AUTO_DRIVE_API_KEY=$API_KEY" >> "$ENV_FILE"
 fi
