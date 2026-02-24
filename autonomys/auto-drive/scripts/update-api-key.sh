@@ -8,13 +8,18 @@ set -euo pipefail
 # shellcheck source=_lib.sh
 source "$(dirname "$0")/_lib.sh"
 
-# Accept key from argument, env var, or interactive prompt
+# Accept key from argument, interactive prompt, or env var (CI only).
+# When stdin is a terminal we always prompt so the user isn't silently
+# handed back the old key that is already exported in their shell.
 if [[ -n "${1:-}" ]]; then
   API_KEY="$1"
+elif [[ -t 0 ]]; then
+  read -rp "New Auto-Drive API key: " API_KEY
 elif [[ -n "${AUTO_DRIVE_API_KEY:-}" ]]; then
   API_KEY="$AUTO_DRIVE_API_KEY"
 else
-  read -rp "New Auto-Drive API key: " API_KEY
+  echo -e "${RED}Error: No API key provided (non-interactive and AUTO_DRIVE_API_KEY is unset).${NC}" >&2
+  exit 1
 fi
 API_KEY="${API_KEY//[[:space:]]/}"
 
