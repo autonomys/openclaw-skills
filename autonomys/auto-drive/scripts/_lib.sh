@@ -47,23 +47,33 @@ autodrive_save_key() {
   local key="$1"
 
   mkdir -p "$AD_OPENCLAW_DIR"
+  chmod 700 "$AD_OPENCLAW_DIR"
 
   # Collect temp files for cleanup
   _AD_TMPS=()
   trap 'rm -f "${_AD_TMPS[@]}"' EXIT
 
   # --- openclaw.json ---------------------------------------------------------
+  # Write to .apiKey (not .env.AUTO_DRIVE_API_KEY) — the skill declares
+  # primaryEnv: AUTO_DRIVE_API_KEY, so the gateway maps .apiKey to that
+  # env var automatically.  This matches the documented config path:
+  # skills.entries.auto-drive.apiKey
   if [[ ! -f "$AD_CONFIG_FILE" ]]; then
+    local newtmp
+    newtmp=$(mktemp)
+    _AD_TMPS+=("$newtmp")
     jq -n --arg key "$key" \
-      '{"skills": {"entries": {"auto-drive": {"enabled": true, "env": {"AUTO_DRIVE_API_KEY": $key}}}}}' \
-      > "$AD_CONFIG_FILE"
+      '{"skills": {"entries": {"auto-drive": {"enabled": true, "apiKey": $key}}}}' \
+      > "$newtmp" && mv "$newtmp" "$AD_CONFIG_FILE"
+    chmod 600 "$AD_CONFIG_FILE"
   else
     local jsontmp
     jsontmp=$(mktemp)
     _AD_TMPS+=("$jsontmp")
     jq --arg key "$key" \
-      '.skills //= {} | .skills.entries //= {} | .skills.entries["auto-drive"] //= {} | .skills.entries["auto-drive"].env //= {} | .skills.entries["auto-drive"].env.AUTO_DRIVE_API_KEY = $key | .skills.entries["auto-drive"].enabled = true' \
+      '.skills //= {} | .skills.entries //= {} | .skills.entries["auto-drive"] //= {} | .skills.entries["auto-drive"].apiKey = $key | .skills.entries["auto-drive"].enabled = true' \
       "$AD_CONFIG_FILE" > "$jsontmp" && mv "$jsontmp" "$AD_CONFIG_FILE"
+    chmod 600 "$AD_CONFIG_FILE"
   fi
   echo -e "${GREEN}✓ Saved to $AD_CONFIG_FILE${NC}"
 
@@ -77,5 +87,6 @@ autodrive_save_key() {
     sed '/^AUTO_DRIVE_API_KEY=/d' "$AD_ENV_FILE" > "$sedtmp" && mv "$sedtmp" "$AD_ENV_FILE"
   fi
   echo "AUTO_DRIVE_API_KEY=$key" >> "$AD_ENV_FILE"
+  chmod 600 "$AD_ENV_FILE"
   echo -e "${GREEN}✓ Saved to $AD_ENV_FILE${NC}"
 }
