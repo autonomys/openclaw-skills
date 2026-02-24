@@ -91,7 +91,7 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 else
   JSONTMP=$(mktemp)
   jq --arg key "$API_KEY" \
-    '.skills.entries["auto-drive"].env.AUTO_DRIVE_API_KEY = $key | .skills.entries["auto-drive"].enabled = true' \
+    '.skills //= {} | .skills.entries //= {} | .skills.entries["auto-drive"] //= {} | .skills.entries["auto-drive"].env //= {} | .skills.entries["auto-drive"].env.AUTO_DRIVE_API_KEY = $key | .skills.entries["auto-drive"].enabled = true' \
     "$CONFIG_FILE" > "$JSONTMP" && mv "$JSONTMP" "$CONFIG_FILE"
 fi
 echo -e "${GREEN}✓ Saved to $CONFIG_FILE (skills.entries.auto-drive.env.AUTO_DRIVE_API_KEY)${NC}"
