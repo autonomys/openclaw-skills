@@ -4,12 +4,8 @@
 
 set -euo pipefail
 
-API_BASE="https://mainnet.auto-drive.autonomys.xyz/api"
-
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+# shellcheck source=_lib.sh
+source "$(dirname "$0")/_lib.sh"
 
 echo ""
 echo "=== Auto-Drive Setup Verification ==="
@@ -24,23 +20,14 @@ fi
 echo -e "${GREEN}✓ AUTO_DRIVE_API_KEY is set${NC}"
 
 # Verify key and fetch account info
-RESPONSE=$(curl -sS -w "\n%{http_code}" "$API_BASE/accounts/@me" \
-  -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
-  -H "X-Auth-Provider: apikey")
-HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-BODY=$(echo "$RESPONSE" | sed '$d')
-
-if [[ "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
-  echo -e "${RED}✗ API key verification failed (HTTP $HTTP_CODE)${NC}" >&2
-  echo "$BODY" >&2
+if ! autodrive_verify_key "$AUTO_DRIVE_API_KEY"; then
   echo "  The key may be invalid or expired. Run: scripts/update-api-key.sh" >&2
   exit 1
 fi
-echo -e "${GREEN}✓ API key is valid${NC}"
 
-# Display account details
-LIMIT=$(echo "$BODY" | jq -r '.uploadLimit // .limits.uploadLimit // empty' 2>/dev/null || true)
-USED=$(echo "$BODY" | jq -r '.uploadedBytes // .limits.uploadedBytes // empty' 2>/dev/null || true)
+# Display account details (AD_VERIFY_BODY set by autodrive_verify_key)
+LIMIT=$(echo "$AD_VERIFY_BODY" | jq -r '.uploadLimit // .limits.uploadLimit // empty' 2>/dev/null || true)
+USED=$(echo "$AD_VERIFY_BODY" | jq -r '.uploadedBytes // .limits.uploadedBytes // empty' 2>/dev/null || true)
 
 if [[ -n "$LIMIT" && -n "$USED" ]]; then
   REMAINING=$((LIMIT - USED))

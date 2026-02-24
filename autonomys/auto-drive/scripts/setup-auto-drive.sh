@@ -7,15 +7,8 @@
 
 set -euo pipefail
 
-API_BASE="https://mainnet.auto-drive.autonomys.xyz/api"
-OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw}"
-ENV_FILE="$OPENCLAW_DIR/.env"
-CONFIG_FILE="$OPENCLAW_DIR/openclaw.json"
-
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+# shellcheck source=_lib.sh
+source "$(dirname "$0")/_lib.sh"
 
 echo ""
 echo "╔══════════════════════════════════════════╗"
@@ -63,52 +56,9 @@ if [[ -z "$API_KEY" ]]; then
   exit 1
 fi
 
-# Verify the key against the accounts endpoint
 echo ""
-echo "Verifying API key..."
-RESPONSE=$(curl -sS -w "\n%{http_code}" "$API_BASE/accounts/@me" \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "X-Auth-Provider: apikey")
-HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-BODY=$(echo "$RESPONSE" | sed '$d')
-
-if [[ "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
-  echo -e "${RED}Error: API key verification failed (HTTP $HTTP_CODE).${NC}" >&2
-  echo "$BODY" >&2
-  echo "Double-check the key at https://explorer.ai3.storage/mainnet/drive/developers and try again." >&2
-  exit 1
-fi
-
-echo -e "${GREEN}✓ API key verified${NC}"
-
-mkdir -p "$OPENCLAW_DIR"
-
-# Temp-file cleanup — remove any mktemp leftovers on exit/error
-JSONTMP="" SEDTMP=""
-trap 'rm -f ${JSONTMP:+"$JSONTMP"} ${SEDTMP:+"$SEDTMP"}' EXIT
-
-# Write to ~/.openclaw/openclaw.json (OpenClaw-native: skills.entries.auto-drive.env)
-if [[ ! -f "$CONFIG_FILE" ]]; then
-  jq -n --arg key "$API_KEY" \
-    '{"skills": {"entries": {"auto-drive": {"enabled": true, "env": {"AUTO_DRIVE_API_KEY": $key}}}}}' \
-    > "$CONFIG_FILE"
-else
-  JSONTMP=$(mktemp)
-  jq --arg key "$API_KEY" \
-    '.skills //= {} | .skills.entries //= {} | .skills.entries["auto-drive"] //= {} | .skills.entries["auto-drive"].env //= {} | .skills.entries["auto-drive"].env.AUTO_DRIVE_API_KEY = $key | .skills.entries["auto-drive"].enabled = true' \
-    "$CONFIG_FILE" > "$JSONTMP" && mv "$JSONTMP" "$CONFIG_FILE"
-fi
-echo -e "${GREEN}✓ Saved to $CONFIG_FILE (skills.entries.auto-drive.env.AUTO_DRIVE_API_KEY)${NC}"
-
-# Also write to ~/.openclaw/.env as a fallback for shell-based invocations
-if [[ -f "$ENV_FILE" ]] && grep -q "^AUTO_DRIVE_API_KEY=" "$ENV_FILE" 2>/dev/null; then
-  SEDTMP=$(mktemp)
-  ESCAPED_KEY=$(printf '%s' "$API_KEY" | sed 's/[|&\]/\\&/g')
-  sed "s|^AUTO_DRIVE_API_KEY=.*|AUTO_DRIVE_API_KEY=$ESCAPED_KEY|" "$ENV_FILE" > "$SEDTMP" && mv "$SEDTMP" "$ENV_FILE"
-else
-  echo "AUTO_DRIVE_API_KEY=$API_KEY" >> "$ENV_FILE"
-fi
-echo -e "${GREEN}✓ Saved to $ENV_FILE (shell fallback)${NC}"
+autodrive_verify_key "$API_KEY"
+autodrive_save_key "$API_KEY"
 
 echo ""
 echo "╔══════════════════════════════════════════╗"
