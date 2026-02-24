@@ -17,15 +17,19 @@ if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
 fi
 
 # Validate output path to prevent path traversal attacks.
-# Resolves symlinks and .. components, then checks the result is within $HOME.
+# Resolves the parent directory (must exist) via cd+pwd, then appends the
+# filename. Checks the canonical result is within $HOME/.
 if [[ -n "$OUTPUT" ]]; then
-  OUTPUT=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$OUTPUT") || {
-    echo "Error: Could not resolve output path: $OUTPUT" >&2; exit 1
+  OUTPUT_DIR_PART="$(dirname "$OUTPUT")"
+  OUTPUT_BASE="$(basename "$OUTPUT")"
+  OUTPUT_RESOLVED="$(cd "$OUTPUT_DIR_PART" 2>/dev/null && pwd)/$OUTPUT_BASE" || {
+    echo "Error: Could not resolve output path — directory does not exist: $OUTPUT_DIR_PART" >&2; exit 1
   }
-  if [[ "$OUTPUT" != "$HOME/"* ]]; then
+  if [[ "$OUTPUT_RESOLVED" != "$HOME/"* ]]; then
     echo "Error: Output path must be within home directory" >&2
     exit 1
   fi
+  OUTPUT="$OUTPUT_RESOLVED"
 fi
 
 GATEWAY="https://gateway.autonomys.xyz"

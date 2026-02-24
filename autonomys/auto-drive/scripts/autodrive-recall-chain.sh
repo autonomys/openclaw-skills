@@ -79,15 +79,16 @@ fi
 
 if [[ -n "$OUTPUT_DIR" ]]; then
   # Validate output directory to prevent path traversal attacks.
-  # Resolves symlinks and .. components, then checks the result is within $HOME.
-  OUTPUT_DIR=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$OUTPUT_DIR") || {
+  # Creates the directory first (so cd can resolve it), then checks the
+  # canonical path is within $HOME/ or equals $HOME exactly.
+  mkdir -p "$OUTPUT_DIR"
+  OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)" || {
     echo "Error: Could not resolve output directory: $OUTPUT_DIR" >&2; exit 1
   }
-  if [[ "$OUTPUT_DIR" != "$HOME/"* ]]; then
+  if [[ "$OUTPUT_DIR" != "$HOME" && "$OUTPUT_DIR" != "$HOME/"* ]]; then
     echo "Error: Output directory must be within home directory" >&2
     exit 1
   fi
-  mkdir -p "$OUTPUT_DIR"
 fi
 
 echo "=== MEMORY CHAIN RESURRECTION ===" >&2

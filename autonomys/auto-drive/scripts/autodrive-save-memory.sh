@@ -31,15 +31,19 @@ done
 # Validate --state-file path to prevent path traversal attacks.
 # Only applied when explicitly passed; the default derives from OPENCLAW_WORKSPACE
 # which is a trusted environment variable, not user input.
-# Resolves symlinks and .. components, then checks the result is within $HOME/.
+# Resolves the parent directory via cd+pwd, then appends the filename.
+# Checks the canonical result is within $HOME/.
 if [[ "$STATE_FILE_EXPLICIT" == true ]]; then
-  STATE_FILE=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$STATE_FILE") || {
-    echo "Error: Could not resolve state file path: $STATE_FILE" >&2; exit 1
+  STATE_FILE_DIR="$(dirname "$STATE_FILE")"
+  STATE_FILE_BASE="$(basename "$STATE_FILE")"
+  STATE_FILE_RESOLVED="$(cd "$STATE_FILE_DIR" 2>/dev/null && pwd)/$STATE_FILE_BASE" || {
+    echo "Error: Could not resolve state file path — directory does not exist: $STATE_FILE_DIR" >&2; exit 1
   }
-  if [[ "$STATE_FILE" != "$HOME/"* ]]; then
+  if [[ "$STATE_FILE_RESOLVED" != "$HOME/"* ]]; then
     echo "Error: State file path must be within home directory" >&2
     exit 1
   fi
+  STATE_FILE="$STATE_FILE_RESOLVED"
 fi
 
 if [[ -z "${AUTO_DRIVE_API_KEY:-}" ]]; then
