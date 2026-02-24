@@ -84,9 +84,13 @@ if [[ -n "$OUTPUT_DIR" ]]; then
   # after the check passes.
   OUTPUT_DIR_PARENT="$OUTPUT_DIR"
   OUTPUT_DIR_SUFFIX=""
-  while [[ -n "$OUTPUT_DIR_PARENT" && ! -d "$OUTPUT_DIR_PARENT" ]]; do
+  while [[ ! -d "$OUTPUT_DIR_PARENT" ]]; do
+    NEXT_PARENT="$(dirname "$OUTPUT_DIR_PARENT")"
+    if [[ "$NEXT_PARENT" == "$OUTPUT_DIR_PARENT" ]]; then
+      echo "Error: Could not resolve output directory — no existing parent found: $OUTPUT_DIR" >&2; exit 1
+    fi
     OUTPUT_DIR_SUFFIX="/$(basename "$OUTPUT_DIR_PARENT")$OUTPUT_DIR_SUFFIX"
-    OUTPUT_DIR_PARENT="$(dirname "$OUTPUT_DIR_PARENT")"
+    OUTPUT_DIR_PARENT="$NEXT_PARENT"
   done
   OUTPUT_DIR_RESOLVED="$(cd "$OUTPUT_DIR_PARENT" 2>/dev/null && pwd)$OUTPUT_DIR_SUFFIX" || {
     echo "Error: Could not resolve output directory: $OUTPUT_DIR" >&2; exit 1
