@@ -11,6 +11,23 @@ echo ""
 echo "=== Auto-Drive Setup Verification ==="
 echo ""
 
+# Check prerequisites first — curl and jq are needed for verification below
+MISSING=()
+for bin in curl jq file; do
+  if command -v "$bin" &>/dev/null; then
+    echo -e "  ${GREEN}✓ $bin${NC}"
+  else
+    echo -e "  ${RED}✗ $bin not found${NC}"
+    MISSING+=("$bin")
+  fi
+done
+
+if [[ ${#MISSING[@]} -gt 0 ]]; then
+  echo -e "${RED}✗ Missing prerequisites: ${MISSING[*]}${NC}" >&2
+  exit 1
+fi
+echo ""
+
 # Check for API key
 if [[ -z "${AUTO_DRIVE_API_KEY:-}" ]]; then
   echo -e "${RED}✗ AUTO_DRIVE_API_KEY is not set${NC}" >&2
@@ -49,23 +66,6 @@ if [[ -n "$LIMIT" && -n "$USED" ]]; then
   else
     echo -e "  Remaining:       ${GREEN}${REMAINING_FMT} ${UNIT}${NC}"
   fi
-fi
-
-# Check prerequisites
-echo ""
-MISSING=()
-for bin in curl jq file; do
-  if command -v "$bin" &>/dev/null; then
-    echo -e "  ${GREEN}✓ $bin${NC}"
-  else
-    echo -e "  ${RED}✗ $bin not found${NC}"
-    MISSING+=("$bin")
-  fi
-done
-
-if [[ ${#MISSING[@]} -gt 0 ]]; then
-  echo -e "${RED}✗ Missing prerequisites: ${MISSING[*]}${NC}" >&2
-  exit 1
 fi
 
 echo ""
