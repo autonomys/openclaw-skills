@@ -22,7 +22,7 @@ if [[ -n "$OUTPUT" ]]; then
   OUTPUT=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$OUTPUT") || {
     echo "Error: Could not resolve output path: $OUTPUT" >&2; exit 1
   }
-  if [[ "$OUTPUT" != "$HOME" && "$OUTPUT" != "$HOME/"* ]]; then
+  if [[ "$OUTPUT" != "$HOME/"* ]]; then
     echo "Error: Output path must be within home directory" >&2
     exit 1
   fi

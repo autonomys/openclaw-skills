@@ -13,6 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INPUT="${1:?Usage: autodrive-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]}"
 AGENT_NAME="${AGENT_NAME:-openclaw-agent}"
 STATE_FILE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace}/memory/autodrive-state.json"
+STATE_FILE_EXPLICIT=false
 
 shift
 while [[ $# -gt 0 ]]; do
@@ -22,19 +23,23 @@ while [[ $# -gt 0 ]]; do
       AGENT_NAME="$2"; shift 2 ;;
     --state-file)
       if [[ $# -lt 2 ]]; then echo "Error: --state-file requires a value" >&2; exit 1; fi
-      STATE_FILE="$2"; shift 2 ;;
+      STATE_FILE="$2"; STATE_FILE_EXPLICIT=true; shift 2 ;;
     *) shift ;;
   esac
 done
 
 # Validate --state-file path to prevent path traversal attacks.
-# Resolves symlinks and .. components, then checks the result is within $HOME.
-STATE_FILE=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$STATE_FILE") || {
-  echo "Error: Could not resolve state file path: $STATE_FILE" >&2; exit 1
-}
-if [[ "$STATE_FILE" != "$HOME" && "$STATE_FILE" != "$HOME/"* ]]; then
-  echo "Error: State file path must be within home directory" >&2
-  exit 1
+# Only applied when explicitly passed; the default derives from OPENCLAW_WORKSPACE
+# which is a trusted environment variable, not user input.
+# Resolves symlinks and .. components, then checks the result is within $HOME/.
+if [[ "$STATE_FILE_EXPLICIT" == true ]]; then
+  STATE_FILE=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$STATE_FILE") || {
+    echo "Error: Could not resolve state file path: $STATE_FILE" >&2; exit 1
+  }
+  if [[ "$STATE_FILE" != "$HOME/"* ]]; then
+    echo "Error: State file path must be within home directory" >&2
+    exit 1
+  fi
 fi
 
 if [[ -z "${AUTO_DRIVE_API_KEY:-}" ]]; then
