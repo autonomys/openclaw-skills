@@ -28,28 +28,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Validate --state-file path to prevent path traversal attacks.
-# Only applied when explicitly passed; the default derives from OPENCLAW_WORKSPACE
-# which is a trusted environment variable, not user input.
-# Reject any .. components upfront, then verify the path is within $HOME.
-# The parent directory need not exist yet — mkdir -p below creates it.
+# Validate explicit --state-file: reject traversal, resolve physically, verify within $HOME.
+# Skipped for the default path which derives from a trusted env var.
 if [[ "$STATE_FILE_EXPLICIT" == true ]]; then
   if [[ "$STATE_FILE" == *..* ]]; then
     echo "Error: State file path must not contain '..': $STATE_FILE" >&2; exit 1
   fi
   HOME_REAL="$(cd "$HOME" && pwd -P)"
-  # Convert to absolute if relative, then normalize the $HOME prefix to its
-  # physical form so the check works even when $HOME is a symlink.
+  # Convert to absolute, normalize $HOME to physical path.
   if [[ "$STATE_FILE" != /* ]]; then
     STATE_FILE_CHECK="$(pwd -P)/$STATE_FILE"
   else
     STATE_FILE_CHECK="$STATE_FILE"
   fi
-  # Normalize logical $HOME prefix to physical $HOME_REAL.
   if [[ "$STATE_FILE_CHECK" == "$HOME/"* ]]; then
     STATE_FILE_CHECK="$HOME_REAL/${STATE_FILE_CHECK#"$HOME/"}"
   fi
-  # If the parent directory exists, resolve it physically to catch symlinks.
+  # Resolve parent physically if it exists (catches symlinks).
   STATE_FILE_DIR="$(dirname "$STATE_FILE_CHECK")"
   STATE_FILE_BASE="$(basename "$STATE_FILE_CHECK")"
   if [[ -d "$STATE_FILE_DIR" ]]; then

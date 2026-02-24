@@ -78,18 +78,13 @@ if [[ -z "${AUTO_DRIVE_API_KEY:-}" ]]; then
 fi
 
 if [[ -n "$OUTPUT_DIR" ]]; then
-  # Validate output directory to prevent path traversal attacks.
-  # Reject any .. components upfront — they are the mechanism for traversal
-  # and have no legitimate use in an agent-supplied path.
-  # Then create the directory, resolve it physically with pwd -P, and verify
-  # it falls within $HOME.
+  # Validate output directory: reject traversal, verify within $HOME before
+  # and after creation (to catch symlinks that resolve outside $HOME).
   if [[ "$OUTPUT_DIR" == *..* ]]; then
     echo "Error: Output directory must not contain '..': $OUTPUT_DIR" >&2; exit 1
   fi
   HOME_REAL="$(cd "$HOME" && pwd -P)"
-  # Validate the prefix BEFORE creating anything on disk.
-  # Convert to absolute if relative, then normalize logical $HOME prefix
-  # to its physical form so the check works when $HOME is a symlink.
+  # Pre-creation check: convert to absolute, normalize $HOME to physical path.
   if [[ "$OUTPUT_DIR" != /* ]]; then
     OUTPUT_DIR_CHECK="$(pwd -P)/$OUTPUT_DIR"
   else
@@ -106,9 +101,7 @@ if [[ -n "$OUTPUT_DIR" ]]; then
   fi
   mkdir -p "$OUTPUT_DIR"
   OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd -P)"
-  # Re-validate after physical resolution to catch symlinks within $HOME
-  # that point outside it (the pre-creation check above can only validate
-  # the logical path; this catches the physical destination).
+  # Post-creation check: re-validate physical path to catch internal symlinks.
   if [[ "$OUTPUT_DIR" != "$HOME_REAL" && "$OUTPUT_DIR" != "$HOME_REAL/"* ]]; then
     echo "Error: Output directory resolves outside home directory (symlink?)" >&2
     exit 1

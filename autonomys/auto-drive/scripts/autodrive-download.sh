@@ -16,8 +16,7 @@ if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
   exit 1
 fi
 
-# Validate output path to prevent path traversal attacks.
-# Reject .. upfront, then resolve physically with pwd -P and verify within $HOME.
+# Validate output path: reject traversal, resolve physically, verify within $HOME.
 if [[ -n "$OUTPUT" ]]; then
   if [[ "$OUTPUT" == *..* ]]; then
     echo "Error: Output path must not contain '..': $OUTPUT" >&2; exit 1
