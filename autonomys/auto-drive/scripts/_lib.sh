@@ -68,14 +68,14 @@ autodrive_save_key() {
   echo -e "${GREEN}✓ Saved to $AD_CONFIG_FILE${NC}"
 
   # --- .env ------------------------------------------------------------------
-  if [[ -f "$AD_ENV_FILE" ]] && grep -q "^AUTO_DRIVE_API_KEY=" "$AD_ENV_FILE" 2>/dev/null; then
-    local sedtmp escaped_key
+  # Remove any existing AUTO_DRIVE_API_KEY lines first to prevent duplicates,
+  # then append exactly one entry.
+  if [[ -f "$AD_ENV_FILE" ]]; then
+    local sedtmp
     sedtmp=$(mktemp)
     _AD_TMPS+=("$sedtmp")
-    escaped_key=$(printf '%s' "$key" | sed 's/[|&\]/\\&/g')
-    sed "s|^AUTO_DRIVE_API_KEY=.*|AUTO_DRIVE_API_KEY=$escaped_key|" "$AD_ENV_FILE" > "$sedtmp" && mv "$sedtmp" "$AD_ENV_FILE"
-  else
-    echo "AUTO_DRIVE_API_KEY=$key" >> "$AD_ENV_FILE"
+    sed '/^AUTO_DRIVE_API_KEY=/d' "$AD_ENV_FILE" > "$sedtmp" && mv "$sedtmp" "$AD_ENV_FILE"
   fi
+  echo "AUTO_DRIVE_API_KEY=$key" >> "$AD_ENV_FILE"
   echo -e "${GREEN}✓ Saved to $AD_ENV_FILE${NC}"
 }
