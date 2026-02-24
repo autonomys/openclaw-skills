@@ -8,6 +8,17 @@ set -euo pipefail
 # shellcheck source=_lib.sh
 source "$(dirname "$0")/_lib.sh"
 
+# Check prerequisites
+MISSING=()
+for bin in curl jq; do
+  command -v "$bin" &>/dev/null || MISSING+=("$bin")
+done
+if [[ ${#MISSING[@]} -gt 0 ]]; then
+  echo -e "${RED}Error: Missing required tools: ${MISSING[*]}${NC}" >&2
+  echo "Install them and re-run this script." >&2
+  exit 1
+fi
+
 # Accept key from argument, interactive prompt, or env var (CI only).
 # When stdin is a terminal we always prompt so the user isn't silently
 # handed back the old key that is already exported in their shell.
