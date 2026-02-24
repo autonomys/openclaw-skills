@@ -86,16 +86,33 @@ if [[ -n "$OUTPUT_DIR" ]]; then
   if [[ "$OUTPUT_DIR" == *..* ]]; then
     echo "Error: Output directory must not contain '..': $OUTPUT_DIR" >&2; exit 1
   fi
-  mkdir -p "$OUTPUT_DIR"
-  OUTPUT_DIR_RESOLVED="$(cd "$OUTPUT_DIR" && pwd -P)" || {
-    echo "Error: Could not resolve output directory: $OUTPUT_DIR" >&2; exit 1
-  }
   HOME_REAL="$(cd "$HOME" && pwd -P)"
-  if [[ "$OUTPUT_DIR_RESOLVED" != "$HOME_REAL" && "$OUTPUT_DIR_RESOLVED" != "$HOME_REAL/"* ]]; then
+  # Validate the prefix BEFORE creating anything on disk.
+  # Convert to absolute if relative, then normalize logical $HOME prefix
+  # to its physical form so the check works when $HOME is a symlink.
+  if [[ "$OUTPUT_DIR" != /* ]]; then
+    OUTPUT_DIR_CHECK="$(pwd -P)/$OUTPUT_DIR"
+  else
+    OUTPUT_DIR_CHECK="$OUTPUT_DIR"
+  fi
+  if [[ "$OUTPUT_DIR_CHECK" == "$HOME/"* ]]; then
+    OUTPUT_DIR_CHECK="$HOME_REAL/${OUTPUT_DIR_CHECK#"$HOME/"}"
+  elif [[ "$OUTPUT_DIR_CHECK" == "$HOME" ]]; then
+    OUTPUT_DIR_CHECK="$HOME_REAL"
+  fi
+  if [[ "$OUTPUT_DIR_CHECK" != "$HOME_REAL" && "$OUTPUT_DIR_CHECK" != "$HOME_REAL/"* ]]; then
     echo "Error: Output directory must be within home directory" >&2
     exit 1
   fi
-  OUTPUT_DIR="$OUTPUT_DIR_RESOLVED"
+  mkdir -p "$OUTPUT_DIR"
+  OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd -P)"
+  # Re-validate after physical resolution to catch symlinks within $HOME
+  # that point outside it (the pre-creation check above can only validate
+  # the logical path; this catches the physical destination).
+  if [[ "$OUTPUT_DIR" != "$HOME_REAL" && "$OUTPUT_DIR" != "$HOME_REAL/"* ]]; then
+    echo "Error: Output directory resolves outside home directory (symlink?)" >&2
+    exit 1
+  fi
 fi
 
 echo "=== MEMORY CHAIN RESURRECTION ===" >&2

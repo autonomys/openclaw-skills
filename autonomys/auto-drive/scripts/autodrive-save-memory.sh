@@ -38,18 +38,28 @@ if [[ "$STATE_FILE_EXPLICIT" == true ]]; then
     echo "Error: State file path must not contain '..': $STATE_FILE" >&2; exit 1
   fi
   HOME_REAL="$(cd "$HOME" && pwd -P)"
-  # Resolve as much of the path as possible: cd into parent if it exists,
-  # otherwise trust the prefix check against $HOME_REAL is sufficient given
-  # .. has already been excluded.
-  STATE_FILE_DIR="$(dirname "$STATE_FILE")"
-  STATE_FILE_BASE="$(basename "$STATE_FILE")"
-  if [[ -d "$STATE_FILE_DIR" ]]; then
-    STATE_FILE="$(cd "$STATE_FILE_DIR" && pwd -P)/$STATE_FILE_BASE"
+  # Convert to absolute if relative, then normalize the $HOME prefix to its
+  # physical form so the check works even when $HOME is a symlink.
+  if [[ "$STATE_FILE" != /* ]]; then
+    STATE_FILE_CHECK="$(pwd -P)/$STATE_FILE"
+  else
+    STATE_FILE_CHECK="$STATE_FILE"
   fi
-  if [[ "$STATE_FILE" != "$HOME_REAL/"* && "$STATE_FILE" != "$HOME/"* ]]; then
+  # Normalize logical $HOME prefix to physical $HOME_REAL.
+  if [[ "$STATE_FILE_CHECK" == "$HOME/"* ]]; then
+    STATE_FILE_CHECK="$HOME_REAL/${STATE_FILE_CHECK#"$HOME/"}"
+  fi
+  # If the parent directory exists, resolve it physically to catch symlinks.
+  STATE_FILE_DIR="$(dirname "$STATE_FILE_CHECK")"
+  STATE_FILE_BASE="$(basename "$STATE_FILE_CHECK")"
+  if [[ -d "$STATE_FILE_DIR" ]]; then
+    STATE_FILE_CHECK="$(cd "$STATE_FILE_DIR" && pwd -P)/$STATE_FILE_BASE"
+  fi
+  if [[ "$STATE_FILE_CHECK" != "$HOME_REAL/"* ]]; then
     echo "Error: State file path must be within home directory" >&2
     exit 1
   fi
+  STATE_FILE="$STATE_FILE_CHECK"
 fi
 
 if [[ -z "${AUTO_DRIVE_API_KEY:-}" ]]; then
