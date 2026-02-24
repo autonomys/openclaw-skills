@@ -79,16 +79,24 @@ fi
 
 if [[ -n "$OUTPUT_DIR" ]]; then
   # Validate output directory to prevent path traversal attacks.
-  # Creates the directory first (so cd can resolve it), then checks the
-  # canonical path is within $HOME/ or equals $HOME exactly.
-  mkdir -p "$OUTPUT_DIR"
-  OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)" || {
+  # Resolves the nearest existing parent via cd+pwd, validates the canonical
+  # path is within $HOME, then creates the directory. Nothing is written until
+  # after the check passes.
+  OUTPUT_DIR_PARENT="$OUTPUT_DIR"
+  OUTPUT_DIR_SUFFIX=""
+  while [[ -n "$OUTPUT_DIR_PARENT" && ! -d "$OUTPUT_DIR_PARENT" ]]; do
+    OUTPUT_DIR_SUFFIX="/$(basename "$OUTPUT_DIR_PARENT")$OUTPUT_DIR_SUFFIX"
+    OUTPUT_DIR_PARENT="$(dirname "$OUTPUT_DIR_PARENT")"
+  done
+  OUTPUT_DIR_RESOLVED="$(cd "$OUTPUT_DIR_PARENT" 2>/dev/null && pwd)$OUTPUT_DIR_SUFFIX" || {
     echo "Error: Could not resolve output directory: $OUTPUT_DIR" >&2; exit 1
   }
-  if [[ "$OUTPUT_DIR" != "$HOME" && "$OUTPUT_DIR" != "$HOME/"* ]]; then
+  if [[ "$OUTPUT_DIR_RESOLVED" != "$HOME" && "$OUTPUT_DIR_RESOLVED" != "$HOME/"* ]]; then
     echo "Error: Output directory must be within home directory" >&2
     exit 1
   fi
+  OUTPUT_DIR="$OUTPUT_DIR_RESOLVED"
+  mkdir -p "$OUTPUT_DIR"
 fi
 
 echo "=== MEMORY CHAIN RESURRECTION ===" >&2
