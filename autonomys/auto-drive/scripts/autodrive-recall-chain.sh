@@ -99,8 +99,8 @@ if [[ -n "$OUTPUT_DIR" ]]; then
     echo "Error: Output directory must be within home directory" >&2
     exit 1
   fi
-  mkdir -p "$OUTPUT_DIR"
-  OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd -P)"
+  mkdir -p "$OUTPUT_DIR_CHECK"
+  OUTPUT_DIR="$(cd "$OUTPUT_DIR_CHECK" && pwd -P)"
   # Post-creation check: re-validate physical path to catch internal symlinks.
   if [[ "$OUTPUT_DIR" != "$HOME_REAL" && "$OUTPUT_DIR" != "$HOME_REAL/"* ]]; then
     echo "Error: Output directory resolves outside home directory (symlink?)" >&2
