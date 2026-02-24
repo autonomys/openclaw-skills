@@ -50,7 +50,7 @@ if command -v xdg-open &>/dev/null; then
 elif command -v open &>/dev/null; then
   open "$DASHBOARD_URL" 2>/dev/null &
 elif [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/version 2>/dev/null; then
-  cmd.exe /c start "$DASHBOARD_URL" 2>/dev/null &
+  cmd.exe /c start "" "$DASHBOARD_URL" 2>/dev/null &
 else
   echo -e "${YELLOW}Could not open browser automatically — visit: $DASHBOARD_URL${NC}"
 fi
@@ -82,6 +82,10 @@ fi
 echo -e "${GREEN}✓ API key verified${NC}"
 
 mkdir -p "$OPENCLAW_DIR"
+
+# Temp-file cleanup — remove any mktemp leftovers on exit/error
+JSONTMP="" SEDTMP=""
+trap 'rm -f ${JSONTMP:+"$JSONTMP"} ${SEDTMP:+"$SEDTMP"}' EXIT
 
 # Write to ~/.openclaw/openclaw.json (OpenClaw-native: skills.entries.auto-drive.env)
 if [[ ! -f "$CONFIG_FILE" ]]; then

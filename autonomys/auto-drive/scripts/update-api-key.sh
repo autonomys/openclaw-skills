@@ -46,6 +46,10 @@ echo -e "${GREEN}✓ Key verified${NC}"
 
 mkdir -p "$OPENCLAW_DIR"
 
+# Temp-file cleanup — remove any mktemp leftovers on exit/error
+JSONTMP="" SEDTMP=""
+trap 'rm -f ${JSONTMP:+"$JSONTMP"} ${SEDTMP:+"$SEDTMP"}' EXIT
+
 # Update openclaw.json
 if [[ ! -f "$CONFIG_FILE" ]]; then
   jq -n --arg key "$API_KEY" \
