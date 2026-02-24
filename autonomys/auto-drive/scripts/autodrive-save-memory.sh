@@ -36,10 +36,11 @@ done
 if [[ "$STATE_FILE_EXPLICIT" == true ]]; then
   STATE_FILE_DIR="$(dirname "$STATE_FILE")"
   STATE_FILE_BASE="$(basename "$STATE_FILE")"
-  STATE_FILE_RESOLVED="$(cd "$STATE_FILE_DIR" 2>/dev/null && pwd)/$STATE_FILE_BASE" || {
+  STATE_FILE_RESOLVED="$(cd "$STATE_FILE_DIR" 2>/dev/null && pwd -P)/$STATE_FILE_BASE" || {
     echo "Error: Could not resolve state file path — directory does not exist: $STATE_FILE_DIR" >&2; exit 1
   }
-  if [[ "$STATE_FILE_RESOLVED" != "$HOME/"* ]]; then
+  HOME_REAL="$(cd "$HOME" && pwd -P)"
+  if [[ "$STATE_FILE_RESOLVED" != "$HOME_REAL/"* ]]; then
     echo "Error: State file path must be within home directory" >&2
     exit 1
   fi
