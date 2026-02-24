@@ -16,6 +16,18 @@ if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
   exit 1
 fi
 
+# Validate output path to prevent path traversal attacks.
+# Resolves symlinks and .. components, then checks the result is within $HOME.
+if [[ -n "$OUTPUT" ]]; then
+  OUTPUT=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$OUTPUT") || {
+    echo "Error: Could not resolve output path: $OUTPUT" >&2; exit 1
+  }
+  if [[ "$OUTPUT" != "$HOME" && "$OUTPUT" != "$HOME/"* ]]; then
+    echo "Error: Output path must be within home directory" >&2
+    exit 1
+  fi
+fi
+
 GATEWAY="https://gateway.autonomys.xyz"
 DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
 

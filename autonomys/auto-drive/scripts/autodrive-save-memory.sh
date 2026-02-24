@@ -27,6 +27,16 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Validate --state-file path to prevent path traversal attacks.
+# Resolves symlinks and .. components, then checks the result is within $HOME.
+STATE_FILE=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$STATE_FILE") || {
+  echo "Error: Could not resolve state file path: $STATE_FILE" >&2; exit 1
+}
+if [[ "$STATE_FILE" != "$HOME" && "$STATE_FILE" != "$HOME/"* ]]; then
+  echo "Error: State file path must be within home directory" >&2
+  exit 1
+fi
+
 if [[ -z "${AUTO_DRIVE_API_KEY:-}" ]]; then
   echo "Error: AUTO_DRIVE_API_KEY not set." >&2
   echo "Get a free key at https://ai3.storage (sign in with Google/GitHub → Developers → Create API Key)" >&2
