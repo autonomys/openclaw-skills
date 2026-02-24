@@ -44,15 +44,23 @@ USED=$(echo "$BODY" | jq -r '.uploadedBytes // .limits.uploadedBytes // empty' 2
 
 if [[ -n "$LIMIT" && -n "$USED" ]]; then
   REMAINING=$((LIMIT - USED))
-  LIMIT_MB=$(echo "scale=1; $LIMIT / 1048576" | bc 2>/dev/null || echo "$LIMIT bytes")
-  USED_MB=$(echo "scale=1; $USED / 1048576" | bc 2>/dev/null || echo "$USED bytes")
-  REMAINING_MB=$(echo "scale=1; $REMAINING / 1048576" | bc 2>/dev/null || echo "$REMAINING bytes")
-  echo "  Upload limit:    ${LIMIT_MB} MB / month"
-  echo "  Used this month: ${USED_MB} MB"
-  if [[ "$REMAINING" -lt 1048576 ]]; then
-    echo -e "  Remaining:       ${YELLOW}${REMAINING_MB} MB (low)${NC}"
+  if command -v bc &>/dev/null; then
+    UNIT="MB"
+    LIMIT_FMT=$(echo "scale=1; $LIMIT / 1048576" | bc)
+    USED_FMT=$(echo "scale=1; $USED / 1048576" | bc)
+    REMAINING_FMT=$(echo "scale=1; $REMAINING / 1048576" | bc)
   else
-    echo -e "  Remaining:       ${GREEN}${REMAINING_MB} MB${NC}"
+    UNIT="bytes"
+    LIMIT_FMT="$LIMIT"
+    USED_FMT="$USED"
+    REMAINING_FMT="$REMAINING"
+  fi
+  echo "  Upload limit:    ${LIMIT_FMT} ${UNIT} / month"
+  echo "  Used this month: ${USED_FMT} ${UNIT}"
+  if [[ "$REMAINING" -lt 1048576 ]]; then
+    echo -e "  Remaining:       ${YELLOW}${REMAINING_FMT} ${UNIT} (low)${NC}"
+  else
+    echo -e "  Remaining:       ${GREEN}${REMAINING_FMT} ${UNIT}${NC}"
   fi
 fi
 
