@@ -31,20 +31,25 @@ done
 # Validate --state-file path to prevent path traversal attacks.
 # Only applied when explicitly passed; the default derives from OPENCLAW_WORKSPACE
 # which is a trusted environment variable, not user input.
-# Resolves the parent directory via cd+pwd, then appends the filename.
-# Checks the canonical result is within $HOME/.
+# Reject any .. components upfront, then verify the path is within $HOME.
+# The parent directory need not exist yet — mkdir -p below creates it.
 if [[ "$STATE_FILE_EXPLICIT" == true ]]; then
+  if [[ "$STATE_FILE" == *..* ]]; then
+    echo "Error: State file path must not contain '..': $STATE_FILE" >&2; exit 1
+  fi
+  HOME_REAL="$(cd "$HOME" && pwd -P)"
+  # Resolve as much of the path as possible: cd into parent if it exists,
+  # otherwise trust the prefix check against $HOME_REAL is sufficient given
+  # .. has already been excluded.
   STATE_FILE_DIR="$(dirname "$STATE_FILE")"
   STATE_FILE_BASE="$(basename "$STATE_FILE")"
-  STATE_FILE_RESOLVED="$(cd "$STATE_FILE_DIR" 2>/dev/null && pwd -P)/$STATE_FILE_BASE" || {
-    echo "Error: Could not resolve state file path — directory does not exist: $STATE_FILE_DIR" >&2; exit 1
-  }
-  HOME_REAL="$(cd "$HOME" && pwd -P)"
-  if [[ "$STATE_FILE_RESOLVED" != "$HOME_REAL/"* ]]; then
+  if [[ -d "$STATE_FILE_DIR" ]]; then
+    STATE_FILE="$(cd "$STATE_FILE_DIR" && pwd -P)/$STATE_FILE_BASE"
+  fi
+  if [[ "$STATE_FILE" != "$HOME_REAL/"* && "$STATE_FILE" != "$HOME/"* ]]; then
     echo "Error: State file path must be within home directory" >&2
     exit 1
   fi
-  STATE_FILE="$STATE_FILE_RESOLVED"
 fi
 
 if [[ -z "${AUTO_DRIVE_API_KEY:-}" ]]; then

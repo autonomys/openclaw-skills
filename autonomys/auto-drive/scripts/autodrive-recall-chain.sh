@@ -79,20 +79,15 @@ fi
 
 if [[ -n "$OUTPUT_DIR" ]]; then
   # Validate output directory to prevent path traversal attacks.
-  # Resolves the nearest existing parent via cd+pwd, validates the canonical
-  # path is within $HOME, then creates the directory. Nothing is written until
-  # after the check passes.
-  OUTPUT_DIR_PARENT="$OUTPUT_DIR"
-  OUTPUT_DIR_SUFFIX=""
-  while [[ ! -d "$OUTPUT_DIR_PARENT" ]]; do
-    NEXT_PARENT="$(dirname "$OUTPUT_DIR_PARENT")"
-    if [[ "$NEXT_PARENT" == "$OUTPUT_DIR_PARENT" ]]; then
-      echo "Error: Could not resolve output directory — no existing parent found: $OUTPUT_DIR" >&2; exit 1
-    fi
-    OUTPUT_DIR_SUFFIX="/$(basename "$OUTPUT_DIR_PARENT")$OUTPUT_DIR_SUFFIX"
-    OUTPUT_DIR_PARENT="$NEXT_PARENT"
-  done
-  OUTPUT_DIR_RESOLVED="$(cd "$OUTPUT_DIR_PARENT" 2>/dev/null && pwd -P)$OUTPUT_DIR_SUFFIX" || {
+  # Reject any .. components upfront — they are the mechanism for traversal
+  # and have no legitimate use in an agent-supplied path.
+  # Then create the directory, resolve it physically with pwd -P, and verify
+  # it falls within $HOME.
+  if [[ "$OUTPUT_DIR" == *..* ]]; then
+    echo "Error: Output directory must not contain '..': $OUTPUT_DIR" >&2; exit 1
+  fi
+  mkdir -p "$OUTPUT_DIR"
+  OUTPUT_DIR_RESOLVED="$(cd "$OUTPUT_DIR" && pwd -P)" || {
     echo "Error: Could not resolve output directory: $OUTPUT_DIR" >&2; exit 1
   }
   HOME_REAL="$(cd "$HOME" && pwd -P)"
@@ -101,7 +96,6 @@ if [[ -n "$OUTPUT_DIR" ]]; then
     exit 1
   fi
   OUTPUT_DIR="$OUTPUT_DIR_RESOLVED"
-  mkdir -p "$OUTPUT_DIR"
 fi
 
 echo "=== MEMORY CHAIN RESURRECTION ===" >&2

@@ -17,9 +17,11 @@ if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
 fi
 
 # Validate output path to prevent path traversal attacks.
-# Uses pwd -P (physical) to resolve symlinks in both the input path and $HOME,
-# so a symlink inside $HOME pointing outside cannot bypass the check.
+# Reject .. upfront, then resolve physically with pwd -P and verify within $HOME.
 if [[ -n "$OUTPUT" ]]; then
+  if [[ "$OUTPUT" == *..* ]]; then
+    echo "Error: Output path must not contain '..': $OUTPUT" >&2; exit 1
+  fi
   OUTPUT_DIR_PART="$(dirname "$OUTPUT")"
   OUTPUT_BASE="$(basename "$OUTPUT")"
   OUTPUT_RESOLVED="$(cd "$OUTPUT_DIR_PART" 2>/dev/null && pwd -P)/$OUTPUT_BASE" || {
