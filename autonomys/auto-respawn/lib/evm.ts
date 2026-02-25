@@ -6,13 +6,16 @@ import type { NetworkId } from './network.js'
 const EVM_DOMAIN_ID = '0'
 
 /**
- * Default MemoryChain contract address.
+ * Default MemoryChain contract addresses per network.
  * Override with AUTO_RESPAWN_CONTRACT_ADDRESS env var if your deployment differs.
  */
-export const MEMORY_CHAIN_ADDRESS_DEFAULT = '0x51DAedAFfFf631820a4650a773096A69cB199A3c'
+const MEMORY_CHAIN_ADDRESSES: Record<NetworkId, string> = {
+  mainnet: '0x51DAedAFfFf631820a4650a773096A69cB199A3c',
+  chronos: '0x5fa47C8F3B519deF692BD9C87179d69a6f4EBf11',
+}
 
-export function getMemoryChainAddress(): string {
-  return process.env.AUTO_RESPAWN_CONTRACT_ADDRESS || MEMORY_CHAIN_ADDRESS_DEFAULT
+export function getMemoryChainAddress(network: NetworkId): string {
+  return process.env.AUTO_RESPAWN_CONTRACT_ADDRESS || MEMORY_CHAIN_ADDRESSES[network]
 }
 
 /**
@@ -94,7 +97,8 @@ export function createEvmSigner(privateKey: string, provider: ethers.Provider): 
  */
 export function getMemoryChainContract(
   signerOrProvider: ethers.Wallet | ethers.Provider,
+  network: NetworkId,
 ): ethers.Contract {
-  const address = getMemoryChainAddress()
+  const address = getMemoryChainAddress(network)
   return new ethers.Contract(address, MEMORY_CHAIN_ABI, signerOrProvider)
 }

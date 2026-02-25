@@ -178,7 +178,7 @@ async function handleAnchor(flags: Record<string, string>): Promise<void> {
 
   try {
     const signer = createEvmSigner(privateKey, provider)
-    const contract = getMemoryChainContract(signer)
+    const contract = getMemoryChainContract(signer, network)
     const result = await anchorCid(contract, cid, evmAddress, network)
 
     if (isMainnet(network)) {
@@ -212,7 +212,7 @@ async function handleGetHead(flags: Record<string, string>, positional: string[]
   const provider = connectEvmProvider(network)
 
   try {
-    const contract = getMemoryChainContract(provider)
+    const contract = getMemoryChainContract(provider, network)
     const result = await getHeadCid(contract, evmAddress, network)
     output(result)
   } finally {
