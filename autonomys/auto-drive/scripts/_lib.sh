@@ -86,7 +86,10 @@ autodrive_save_key() {
     _AD_TMPS+=("$sedtmp")
     sed '/^AUTO_DRIVE_API_KEY=/d' "$AD_ENV_FILE" > "$sedtmp" && mv "$sedtmp" "$AD_ENV_FILE"
   fi
-  echo "AUTO_DRIVE_API_KEY=$key" >> "$AD_ENV_FILE"
+  # Single-quote the value so characters like #, $, and backticks are
+  # preserved literally when the .env file is later sourced by bash.
+  local safe_key="${key//\'/\'\\\'\'}"
+  echo "AUTO_DRIVE_API_KEY='${safe_key}'" >> "$AD_ENV_FILE"
   chmod 600 "$AD_ENV_FILE"
   echo -e "${GREEN}✓ Saved to $AD_ENV_FILE${NC}"
 }
