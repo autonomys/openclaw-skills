@@ -102,8 +102,9 @@ npx tsx auto-respawn.ts fund-evm --from <wallet-name> --amount <tokens> [--netwo
 Bridges tokens from the consensus layer to the same wallet's EVM address on Auto-EVM via cross-domain messaging (XDM). Use this to get gas for `anchor` operations.
 
 - `--from` — name of the saved wallet (consensus keypair is decrypted to sign the extrinsic)
-- `--amount` — amount in AI3/tAI3 (e.g. `1`)
+- `--amount` — amount in AI3/tAI3 (e.g. `1`). **Minimum: 1 AI3/tAI3.**
 - Returns JSON: `{ success, txHash, blockHash, from, toEvmAddress, amount, network, symbol }`
+- **Confirmation time: ~10 minutes.** The consensus transaction confirms immediately, but bridged tokens take approximately 10 minutes to appear on Auto-EVM. Use `evm-balance` to verify arrival.
 
 ## Withdraw (Auto-EVM → Consensus Bridge)
 
@@ -114,8 +115,9 @@ npx tsx auto-respawn.ts withdraw --from <wallet-name> --amount <tokens> [--netwo
 Bridges tokens from Auto-EVM back to the same wallet's consensus address. Uses the transporter precompile at `0x0800` on Auto-EVM.
 
 - `--from` — name of the saved wallet (EVM private key is decrypted to sign the transaction)
-- `--amount` — amount in AI3/tAI3 (e.g. `0.5`)
+- `--amount` — amount in AI3/tAI3 (e.g. `0.5`). **Minimum: 1 AI3/tAI3.**
 - Returns JSON: `{ success, transactionHash, blockNumber, blockHash, gasUsed, fromEvmAddress, toConsensusAddress, amount, network, symbol }`
+- **Confirmation time: ~10 minutes.** Tokens take approximately 10 minutes to appear on the consensus layer.
 
 ## Remark
 

@@ -89,6 +89,11 @@ Uses the transporter precompile at `0x0000000000000000000000000000000000000800` 
 
 The `@autonomys/auto-xdm` package provides `transferToConsensus()` which handles encoding and submission.
 
+### XDM Constraints
+
+- **Minimum transfer amount**: 1 AI3/tAI3. Transfers below this amount will fail.
+- **Confirmation time**: ~10 minutes. The source-side transaction confirms immediately, but bridged tokens take approximately 10 minutes to appear on the destination domain. This applies in both directions (consensus → EVM and EVM → consensus).
+
 ### Token Flow for Agents
 
 Typical agent lifecycle:

@@ -93,6 +93,10 @@ npx tsx auto-respawn.ts fund-evm --from my-agent --amount 1
 
 This sends 1 tAI3 from the consensus address to the same wallet's EVM address via cross-domain messaging. The bridged tokens pay for `anchor` gas.
 
+> **Minimum transfer: 1 AI3/tAI3.** Cross-domain transfers below this amount will fail.
+>
+> **Confirmation time: ~10 minutes.** The consensus transaction confirms quickly, but bridged tokens take approximately 10 minutes to appear on Auto-EVM. Check with `evm-balance` to verify arrival.
+
 ### 4. Verify Setup
 
 ```bash
@@ -205,6 +209,8 @@ npx tsx auto-respawn.ts fund-evm --from <wallet-name> --amount <tokens> [--netwo
 
 Move tokens from the consensus layer to the same wallet's EVM address on Auto-EVM. Use this to get gas for `anchor` operations. The consensus keypair signs a cross-domain transfer that credits the wallet's EVM address.
 
+**Minimum transfer: 1 AI3/tAI3.** Bridged tokens take **~10 minutes** to appear on Auto-EVM.
+
 ### Bridge: Auto-EVM → Consensus
 
 ```bash
@@ -212,6 +218,8 @@ npx tsx auto-respawn.ts withdraw --from <wallet-name> --amount <tokens> [--netwo
 ```
 
 Move tokens from Auto-EVM back to the consensus layer. Uses the EVM transporter precompile. The wallet's EVM private key is decrypted and used to sign the transaction.
+
+**Minimum transfer: 1 AI3/tAI3.** Bridged tokens take **~10 minutes** to appear on the consensus layer.
 
 ### Write an On-Chain Remark
 
@@ -257,7 +265,7 @@ You can pass either an EVM address (`0x...`) or a wallet name. If you pass a wal
 
 **User:** "Fund my EVM address for anchoring"
 → Run `npx tsx auto-respawn.ts fund-evm --from my-agent --amount 1`
-→ Report that 1 tAI3 was bridged to the EVM address
+→ Report that 1 tAI3 was bridged to the EVM address. Remind the user it takes ~10 minutes for the tokens to appear on Auto-EVM.
 
 **User:** "Send my EVM tokens back to consensus"
 → **Confirm with the user first** — "I'll withdraw tokens from your EVM address to consensus. Proceed?"
