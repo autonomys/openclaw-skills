@@ -16,7 +16,6 @@ if ! command -v python3 &>/dev/null && ! command -v perl &>/dev/null; then
   ad_install_hint python3
 fi
 
-DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
 
 # First arg can be a CID or a flag — if no CID given, try state file
 CID=""
@@ -134,7 +133,7 @@ while [[ -n "$CID" && "$CID" != "null" && $COUNT -lt $LIMIT ]]; do
 
   # Download via authenticated API (handles decompression server-side).
   EXPERIENCE=$(curl -sS --fail \
-    "$DOWNLOAD_API/downloads/$CID" \
+    "$AD_DOWNLOAD_API/downloads/$CID" \
     -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
     -H "X-Auth-Provider: apikey" 2>/dev/null \
     || true)

@@ -5,6 +5,7 @@
 # -- Constants ----------------------------------------------------------------
 
 AD_API_BASE="https://mainnet.auto-drive.autonomys.xyz/api"
+AD_DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
 AD_OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw}"
 AD_ENV_FILE="$AD_OPENCLAW_DIR/.env"
 AD_CONFIG_FILE="$AD_OPENCLAW_DIR/openclaw.json"
@@ -46,7 +47,7 @@ ad_require_tools() {
     command -v "$_cmd" &>/dev/null || _missing+=("$_cmd")
   done
   if [[ ${#_missing[@]} -gt 0 ]]; then
-    echo "Error: Missing required tools: ${_missing[*]}" >&2
+    echo -e "${RED}Error: Missing required tools: ${_missing[*]}${NC}" >&2
     ad_install_hint "${_missing[@]}"
     exit 1
   fi

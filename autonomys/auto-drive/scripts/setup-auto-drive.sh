@@ -16,16 +16,8 @@ echo "║  Autonomys Auto-Drive — Setup            ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
-# Check prerequisites
-MISSING=()
-for bin in curl jq; do
-  command -v "$bin" &>/dev/null || MISSING+=("$bin")
-done
-if [[ ${#MISSING[@]} -gt 0 ]]; then
-  echo -e "${RED}Error: Missing required tools: ${MISSING[*]}${NC}" >&2
-  echo "Install them and re-run this script." >&2
-  exit 1
-fi
+ad_warn_git_bash
+ad_require_tools curl jq
 echo -e "${GREEN}✓ Prerequisites OK (curl, jq)${NC}"
 echo ""
 
