@@ -25,8 +25,11 @@ export async function submitRemark(
 
   const result = await signAndSendTx(sender, tx)
 
+  // The SDK's detectTxSuccess has a bug (forEach return doesn't propagate)
+  // so result.success is always false. If signAndSendTx resolved without
+  // throwing, the tx landed in a block — that's success.
   const remarkResult: RemarkResult = {
-    success: result.success,
+    success: !!(result.txHash && result.blockHash),
     txHash: result.txHash,
     blockHash: result.blockHash,
     from: formatAddress(sender.address),
