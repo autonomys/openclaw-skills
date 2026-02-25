@@ -59,7 +59,7 @@ function error(message: string, code = 1): never {
  */
 function validateAmount(amount: string): void {
   const n = Number(amount)
-  if (Number.isNaN(n) || n <= 0) {
+  if (!Number.isFinite(n) || n <= 0) {
     error(`Invalid amount: "${amount}". Must be a positive number (e.g. "1.5").`)
   }
 }
