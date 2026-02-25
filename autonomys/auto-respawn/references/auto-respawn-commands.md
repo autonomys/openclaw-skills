@@ -177,7 +177,7 @@ Reads the last anchored CID for any EVM address from the MemoryChain contract. T
 | `AUTO_RESPAWN_PASSPHRASE` | Wallet encryption passphrase | — |
 | `AUTO_RESPAWN_PASSPHRASE_FILE` | Path to file containing passphrase | `~/.openclaw/auto-respawn/.passphrase` |
 | `AUTO_RESPAWN_NETWORK` | Default network | `chronos` |
-| `AUTO_RESPAWN_CONTRACT_ADDRESS` | MemoryChain contract address | `0x51DAedAFfFf631820a4650a773096A69cB199A3c` |
+| `AUTO_RESPAWN_CONTRACT_ADDRESS` | MemoryChain contract address | `0x51DAedAFfFf631820a4650a773096A69cB199A3c` (mainnet). Set to `0x5fa47C8F3B519deF692BD9C87179d69a6f4EBf11` for Chronos. |
 
 Passphrase resolution order: env var → file → interactive prompt.
 

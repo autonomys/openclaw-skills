@@ -56,6 +56,7 @@ Auto-EVM is an Ethereum-compatible domain running on top of the Autonomys consen
 The MemoryChain contract is the core respawn primitive. It maps EVM addresses to CID strings, providing a simple key-value store for agent memory chain heads.
 
 - **Mainnet address**: `0x51DAedAFfFf631820a4650a773096A69cB199A3c`
+- **Chronos address**: `0x5fa47C8F3B519deF692BD9C87179d69a6f4EBf11`
 - **Source**: https://github.com/autojeremy/openclaw-memory-chain
 - **Functions**:
   - `updateHead(string cid)` — write a CID (costs gas)
