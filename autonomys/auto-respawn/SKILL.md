@@ -147,7 +147,7 @@ Write arbitrary data as a permanent on-chain record on the consensus layer.
 npx tsx auto-respawn.ts anchor --from <wallet-name> --cid <cid> [--network chronos|mainnet]
 ```
 
-Write a CID to the MemoryChain smart contract on Auto-EVM. This is the core respawn operation — it stores the Blake3 hash of your CID on-chain, linked to your EVM address.
+Write a CID to the MemoryChain smart contract on Auto-EVM. This is the core respawn operation — it stores your CID on-chain, linked to your EVM address.
 
 The wallet's EVM private key is decrypted and used to sign the transaction. Requires passphrase.
 

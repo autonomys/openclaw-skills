@@ -53,15 +53,16 @@ Auto-EVM is an Ethereum-compatible domain running on top of the Autonomys consen
 
 ### MemoryChain Contract
 
-The MemoryChain contract is the core respawn primitive. It maps EVM addresses to Blake3 hashes (bytes32), providing a simple key-value store for agent memory chain heads.
+The MemoryChain contract is the core respawn primitive. It maps EVM addresses to CID strings, providing a simple key-value store for agent memory chain heads.
 
-- **Address**: `0x51DAedAFfFf631820a4650a773096A69cB199A3c`
+- **Mainnet address**: `0x51DAedAFfFf631820a4650a773096A69cB199A3c`
+- **Source**: https://github.com/autojeremy/openclaw-memory-chain
 - **Functions**:
-  - `setLastMemoryHash(bytes32 hash)` — write a hash (costs gas)
-  - `getLastMemoryHash(address) → bytes32` — read a hash (free, no gas)
-- **Event**: `LastMemoryHashSet(address indexed agent, bytes32 hash)`
+  - `updateHead(string cid)` — write a CID (costs gas)
+  - `getHead(address) → string` — read a CID (free, no gas)
+- **Event**: `HeadUpdated(address indexed agent, string cid, uint256 timestamp)`
 
-The contract stores Blake3 hashes, not CID strings. auto-respawn handles the CID ↔ Blake3 conversion transparently using `@autonomys/auto-dag-data`.
+The contract is multi-tenant: any wallet can store its own head CID. The contract stores CID strings directly — no conversion needed.
 
 ### RPC Endpoints
 
@@ -72,8 +73,21 @@ Auto-EVM uses WebSocket RPC endpoints:
 
 These are resolved automatically by the SDK's `getNetworkDomainRpcUrls()`.
 
+## Block Explorers
+
+### Consensus (Subscan)
+
+- Mainnet: https://autonomys.subscan.io/
+- Chronos: https://autonomys-chronos.subscan.io/
+
+### Auto-EVM (Blockscout)
+
+- Mainnet: https://explorer.auto-evm.mainnet.autonomys.xyz/
+- Chronos: https://explorer.auto-evm.chronos.autonomys.xyz/
+
 ## Key Links
 
-- Dashboard: https://explorer.autonomys.xyz
 - Auto-Drive: https://ai3.storage
 - SDK: https://github.com/autonomys/auto-sdk
+- MemoryChain contract: https://github.com/autojeremy/openclaw-memory-chain
+- Faucet (testnet tAI3): https://autonomysfaucet.xyz/

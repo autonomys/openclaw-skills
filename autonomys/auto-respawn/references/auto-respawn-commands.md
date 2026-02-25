@@ -101,13 +101,12 @@ Writes arbitrary data as a permanent on-chain record via `system.remark` on the 
 npx tsx auto-respawn.ts anchor --from <wallet-name> --cid <cid> [--network chronos|mainnet]
 ```
 
-Writes a CID to the MemoryChain smart contract on Auto-EVM. This is the core respawn primitive — it converts the CID to a Blake3 hash and stores it on-chain, linked to the wallet's EVM address.
+Writes a CID to the MemoryChain smart contract on Auto-EVM. The contract stores the CID string directly, linked to the wallet's EVM address.
 
 - `--from` — name of the saved wallet (EVM private key is decrypted to sign the transaction)
 - `--cid` — the CID string to anchor (e.g. `bafkr6ie...`)
-- Returns JSON: `{ success, txHash, blockHash, cid, hash, evmAddress, network }`
-
-The contract address is `0x51DAedAFfFf631820a4650a773096A69cB199A3c`.
+- Returns JSON: `{ success, txHash, blockHash, cid, evmAddress, network }`
+- Contract source: https://github.com/autojeremy/openclaw-memory-chain
 
 ## Get Head (Auto-EVM)
 
@@ -119,7 +118,7 @@ Reads the last anchored CID for any EVM address from the MemoryChain contract. T
 
 - Positional argument: an EVM address (`0x...`) or a wallet name
 - If a wallet name is given, the stored EVM address is used
-- Returns JSON: `{ evmAddress, cid, hash, network }`
+- Returns JSON: `{ evmAddress, cid, network }`
 - `cid` is `undefined` if no CID has been anchored for that address
 
 ## Environment Variables

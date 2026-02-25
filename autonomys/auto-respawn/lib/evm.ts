@@ -16,28 +16,24 @@ export function getMemoryChainAddress(): string {
 }
 
 /**
- * MemoryChain contract ABI — matches the official ABI from
- * auto-sdk/packages/auto-agents/src/experiences/abi/memory.ts
+ * MemoryChain contract ABI — matches the OpenClaw MemoryChain contract.
+ * Source: https://github.com/autojeremy/openclaw-memory-chain
+ *
+ * The contract stores CID strings directly (no hashing).
+ * updateHead(string cid) writes, getHead(address) reads.
  */
 export const MEMORY_CHAIN_ABI = [
   {
-    inputs: [{ internalType: 'bytes32', name: 'hash', type: 'bytes32' }],
-    name: 'setLastMemoryHash',
+    inputs: [{ internalType: 'string', name: 'cid', type: 'string' }],
+    name: 'updateHead',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
   },
   {
-    inputs: [{ internalType: 'address', name: '_agent', type: 'address' }],
-    name: 'getLastMemoryHash',
-    outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [{ internalType: 'address', name: '', type: 'address' }],
-    name: 'lastMemoryHash',
-    outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }],
+    inputs: [{ internalType: 'address', name: 'agent', type: 'address' }],
+    name: 'getHead',
+    outputs: [{ internalType: 'string', name: '', type: 'string' }],
     stateMutability: 'view',
     type: 'function',
   },
@@ -45,9 +41,10 @@ export const MEMORY_CHAIN_ABI = [
     anonymous: false,
     inputs: [
       { indexed: true, internalType: 'address', name: 'agent', type: 'address' },
-      { indexed: false, internalType: 'bytes32', name: 'hash', type: 'bytes32' },
+      { indexed: false, internalType: 'string', name: 'cid', type: 'string' },
+      { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
     ],
-    name: 'LastMemoryHashSet',
+    name: 'HeadUpdated',
     type: 'event',
   },
 ] as const
