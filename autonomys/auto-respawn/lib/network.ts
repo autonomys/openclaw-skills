@@ -11,6 +11,11 @@ const NETWORK_TOKENS: Record<NetworkId, { symbol: string; name: string }> = {
 
 export function resolveNetwork(flag?: string): NetworkId {
   if (flag === 'mainnet' || flag === 'chronos') return flag
+  if (flag) {
+    throw new Error(
+      `Unknown network: "${flag}". Must be "chronos" or "mainnet".`,
+    )
+  }
   const env = process.env.AUTO_RESPAWN_NETWORK
   if (env === 'mainnet' || env === 'chronos') return env
   return 'chronos'
