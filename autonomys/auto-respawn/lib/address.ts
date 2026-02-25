@@ -1,4 +1,5 @@
 import { address as encodeAddress, decode } from '@autonomys/auto-utils'
+import { ethers } from 'ethers'
 
 /**
  * Validate and normalise a consensus-layer address.
@@ -32,4 +33,26 @@ export function normalizeAddress(input: string): string {
   const normalized = encodeAddress(publicKey)
 
   return normalized
+}
+
+/**
+ * Validate and normalise an EVM address.
+ *
+ * Accepted format: 0x... (42-character hex string)
+ * Returns the checksummed EVM address.
+ */
+export function normalizeEvmAddress(input: string): string {
+  if (!input.startsWith('0x')) {
+    throw new Error(
+      `Invalid EVM address: "${input.slice(0, 10)}…". Expected an address starting with 0x.`,
+    )
+  }
+
+  try {
+    return ethers.getAddress(input) // Returns checksummed address
+  } catch {
+    throw new Error(
+      `Invalid EVM address: "${input}". Not a valid Ethereum address.`,
+    )
+  }
 }

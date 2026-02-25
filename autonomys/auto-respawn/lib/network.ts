@@ -1,5 +1,6 @@
 import { activate, disconnect, getNetworkDetails } from '@autonomys/auto-utils'
 import type { ApiPromise } from '@polkadot/api'
+import type { ethers } from 'ethers'
 
 export type NetworkId = 'chronos' | 'mainnet'
 
@@ -30,4 +31,11 @@ export async function connectApi(network: NetworkId): Promise<ApiPromise> {
 
 export async function disconnectApi(api: ApiPromise): Promise<void> {
   await disconnect(api)
+}
+
+/**
+ * Cleanly close an ethers WebSocket provider.
+ */
+export async function disconnectEvmProvider(provider: ethers.WebSocketProvider): Promise<void> {
+  provider.destroy()
 }

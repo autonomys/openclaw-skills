@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
-import { connectApi, disconnectApi, resolveNetwork, type NetworkId } from './lib/network.js'
-import { createWallet, importWallet, listWallets, loadWallet } from './lib/wallet.js'
+import { connectApi, disconnectApi, disconnectEvmProvider, resolveNetwork, isMainnet, type NetworkId } from './lib/network.js'
+import { createWallet, importWallet, listWallets, loadWallet, getWalletInfo, loadEvmAddress, loadEvmPrivateKey } from './lib/wallet.js'
 import { queryBalance } from './lib/balance.js'
 import { transferTokens } from './lib/transfer.js'
 import { submitRemark } from './lib/remark.js'
+import { connectEvmProvider, createEvmSigner, getMemoryChainContract } from './lib/evm.js'
+import { anchorCid, getHeadCid } from './lib/memory-chain.js'
+import { normalizeEvmAddress } from './lib/address.js'
 
 const COMMANDS_WITH_SUBCOMMANDS = new Set(['wallet'])
 
@@ -63,7 +66,12 @@ async function handleWallet(subcommand: string | undefined, flags: Record<string
       console.error('')
       console.error('===============================================')
       console.error('')
-      output({ name: result.name, address: result.address, keyfilePath: result.keyfilePath })
+      output({
+        name: result.name,
+        address: result.address,
+        evmAddress: result.evmAddress,
+        keyfilePath: result.keyfilePath,
+      })
       break
     }
 
@@ -83,8 +91,15 @@ async function handleWallet(subcommand: string | undefined, flags: Record<string
       break
     }
 
+    case 'info': {
+      const name = flags.name || 'default'
+      const info = await getWalletInfo(name)
+      output(info)
+      break
+    }
+
     default:
-      error(`Unknown wallet subcommand: "${subcommand}". Use: create, import, list`)
+      error(`Unknown wallet subcommand: "${subcommand}". Use: create, import, list, info`)
   }
 }
 
@@ -143,6 +158,65 @@ async function handleRemark(flags: Record<string, string>): Promise<void> {
   }
 }
 
+async function handleAnchor(flags: Record<string, string>): Promise<void> {
+  const from = flags.from
+  const cid = flags.cid
+
+  if (!from) error('--from <wallet-name> is required')
+  if (!cid) error('--cid <cid-string> is required')
+
+  const network = resolveNetwork(flags.network)
+
+  // Load EVM private key from wallet (requires passphrase)
+  const { privateKey, address: evmAddress } = await loadEvmPrivateKey(from)
+
+  // Connect to Auto-EVM
+  const provider = connectEvmProvider(network)
+
+  try {
+    const signer = createEvmSigner(privateKey, provider)
+    const contract = getMemoryChainContract(signer)
+    const result = await anchorCid(contract, cid, evmAddress, network)
+
+    if (isMainnet(network)) {
+      result.warning = 'This was a mainnet transaction on Auto-EVM with real AI3 tokens.'
+    }
+
+    output(result)
+  } finally {
+    await disconnectEvmProvider(provider)
+  }
+}
+
+async function handleGetHead(flags: Record<string, string>, positional: string[]): Promise<void> {
+  const target = positional[0] || flags.address || flags.name
+
+  if (!target) {
+    error('Address or wallet name is required. Usage: gethead <0x-address-or-wallet-name> [--network chronos|mainnet]')
+  }
+
+  const network = resolveNetwork(flags.network)
+
+  // Determine EVM address: if it starts with 0x, treat as EVM address; otherwise as wallet name
+  let evmAddress: string
+  if (target.startsWith('0x')) {
+    evmAddress = normalizeEvmAddress(target)
+  } else {
+    evmAddress = await loadEvmAddress(target)
+  }
+
+  // Connect to Auto-EVM (read-only — no signer needed)
+  const provider = connectEvmProvider(network)
+
+  try {
+    const contract = getMemoryChainContract(provider)
+    const result = await getHeadCid(contract, evmAddress, network)
+    output(result)
+  } finally {
+    await disconnectEvmProvider(provider)
+  }
+}
+
 function printUsage(): void {
   console.error(`auto-respawn — Anchor agent identity on the Autonomys Network
 
@@ -150,6 +224,7 @@ Commands:
   wallet create [--name <name>]                          Create a new wallet
   wallet import --name <name> --mnemonic "<words>"       Import from recovery phrase
   wallet list                                            List saved wallets
+  wallet info [--name <name>]                            Show wallet addresses (consensus + EVM)
 
   balance <address> [--network chronos|mainnet]          Check wallet balance
 
@@ -158,6 +233,12 @@ Commands:
 
   remark --from <wallet> --data <string>                 Write on-chain remark
          [--network chronos|mainnet]
+
+  anchor --from <wallet> --cid <cid>                     Anchor a CID on the MemoryChain contract
+         [--network chronos|mainnet]
+
+  gethead <0x-address-or-wallet-name>                    Read last anchored CID
+          [--network chronos|mainnet]
 
 Environment:
   AUTO_RESPAWN_PASSPHRASE       Wallet encryption passphrase
@@ -182,6 +263,12 @@ async function main(): Promise<void> {
       case 'remark':
         await handleRemark(flags)
         break
+      case 'anchor':
+        await handleAnchor(flags)
+        break
+      case 'gethead':
+        await handleGetHead(flags, positional)
+        break
       case 'help':
       case '--help':
       case '-h':
@@ -197,7 +284,7 @@ async function main(): Promise<void> {
   }
 }
 
-// Catch unhandled rejections (e.g. from Polkadot RPC errors)
+// Catch unhandled rejections (e.g. from RPC errors)
 process.on('unhandledRejection', (err) => {
   const message = err instanceof Error ? err.message : String(err)
   error(message)

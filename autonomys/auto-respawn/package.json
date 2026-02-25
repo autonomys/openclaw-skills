@@ -5,7 +5,9 @@
   "type": "module",
   "dependencies": {
     "@autonomys/auto-consensus": "^1.6.9",
-    "@autonomys/auto-utils": "^1.6.9"
+    "@autonomys/auto-dag-data": "^1.6.9",
+    "@autonomys/auto-utils": "^1.6.9",
+    "ethers": "^6.16.0"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

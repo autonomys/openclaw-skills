@@ -2,6 +2,7 @@ import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline'
+import { ethers } from 'ethers'
 import {
   Keyring,
   cryptoWaitReady,
@@ -10,6 +11,7 @@ import {
   address as formatAddress,
 } from '@autonomys/auto-utils'
 import type { KeyringPair, KeyringPair$Json } from '@polkadot/keyring/types'
+import { deriveEvmKey } from './evm.js'
 
 const WALLETS_DIR = join(
   process.env.HOME || process.env.USERPROFILE || '~',
@@ -25,9 +27,33 @@ const PASSPHRASE_FILE_DEFAULT = join(
   '.passphrase',
 )
 
+// --- Wallet file format ---
+
+/**
+ * auto-respawn wallet file format.
+ *
+ * Contains two independently encrypted private keys (consensus + EVM),
+ * both protected by the same user passphrase but using their respective
+ * ecosystem's standard encryption:
+ *
+ *   - Consensus key: Polkadot keyring JSON via `pair.toJson(passphrase)`
+ *   - EVM key: Ethereum V3 Keystore via `ethers.Wallet.encryptSync(passphrase)`
+ *
+ * The EVM address is stored in plaintext (it's public information).
+ */
+interface WalletFile {
+  /** Standard Polkadot keyring JSON — encrypted consensus keypair */
+  keyring: KeyringPair$Json
+  /** EVM address derived from the same mnemonic (public, stored for quick lookup) */
+  evmAddress: string
+  /** Ethereum V3 Keystore JSON — encrypted EVM private key (standard format, compatible with MetaMask/geth) */
+  evmKeystore: string
+}
+
 export interface WalletInfo {
   name: string
   address: string
+  evmAddress: string
   keyfilePath: string
 }
 
@@ -43,6 +69,11 @@ async function ensureWalletsDir(): Promise<void> {
 
 function keyfilePath(name: string): string {
   return join(WALLETS_DIR, `${name}.json`)
+}
+
+async function readWalletFile(filepath: string): Promise<WalletFile> {
+  const raw = await readFile(filepath, 'utf-8')
+  return JSON.parse(raw) as WalletFile
 }
 
 export async function resolvePassphrase(): Promise<string> {
@@ -92,16 +123,28 @@ export async function createWallet(name: string): Promise<CreatedWallet> {
   const wallet = sdkGenerateWallet()
   if (!wallet.keyringPair) throw new Error('Failed to generate wallet keypair')
   const passphrase = await resolvePassphrase()
-  const json = wallet.keyringPair.toJson(passphrase)
 
-  // Add name to metadata
-  json.meta = { ...json.meta, name, whenCreated: Date.now() }
+  // Encrypt consensus key (Polkadot PKCS8: scrypt + XSalsa20-Poly1305)
+  const keyringJson = wallet.keyringPair.toJson(passphrase)
+  keyringJson.meta = { ...keyringJson.meta, name, whenCreated: Date.now() }
 
-  await writeFile(filepath, JSON.stringify(json, null, 2), { mode: 0o600 })
+  // Derive EVM key and encrypt it via ethers V3 Keystore
+  const evm = deriveEvmKey(wallet.mnemonic)
+  const evmWallet = new ethers.Wallet(evm.privateKey)
+  const evmKeystore = evmWallet.encryptSync(passphrase)
+
+  const walletFile: WalletFile = {
+    keyring: keyringJson,
+    evmAddress: evm.address,
+    evmKeystore,
+  }
+
+  await writeFile(filepath, JSON.stringify(walletFile, null, 2), { mode: 0o600 })
 
   return {
     name,
     address: wallet.address,
+    evmAddress: evm.address,
     mnemonic: wallet.mnemonic,
     keyfilePath: filepath,
   }
@@ -119,15 +162,28 @@ export async function importWallet(name: string, mnemonic: string): Promise<Wall
   const wallet = sdkSetupWallet({ mnemonic })
   if (!wallet.keyringPair) throw new Error('Failed to setup wallet keypair from mnemonic')
   const passphrase = await resolvePassphrase()
-  const json = wallet.keyringPair.toJson(passphrase)
 
-  json.meta = { ...json.meta, name, whenCreated: Date.now() }
+  // Encrypt consensus key (Polkadot PKCS8: scrypt + XSalsa20-Poly1305)
+  const keyringJson = wallet.keyringPair.toJson(passphrase)
+  keyringJson.meta = { ...keyringJson.meta, name, whenCreated: Date.now() }
 
-  await writeFile(filepath, JSON.stringify(json, null, 2), { mode: 0o600 })
+  // Derive EVM key and encrypt it via ethers V3 Keystore
+  const evm = deriveEvmKey(mnemonic)
+  const evmWallet = new ethers.Wallet(evm.privateKey)
+  const evmKeystore = evmWallet.encryptSync(passphrase)
+
+  const walletFile: WalletFile = {
+    keyring: keyringJson,
+    evmAddress: evm.address,
+    evmKeystore,
+  }
+
+  await writeFile(filepath, JSON.stringify(walletFile, null, 2), { mode: 0o600 })
 
   return {
     name,
     address: wallet.address,
+    evmAddress: evm.address,
     keyfilePath: filepath,
   }
 }
@@ -144,12 +200,15 @@ export async function listWallets(): Promise<WalletInfo[]> {
     if (!file.endsWith('.json')) continue
     try {
       const filepath = join(WALLETS_DIR, file)
-      const raw = await readFile(filepath, 'utf-8')
-      const json: KeyringPair$Json = JSON.parse(raw)
-      const name = (json.meta?.name as string) || file.replace('.json', '')
-      // Convert the generic SS58 address to Autonomys format
-      const autonomysAddress = formatAddress(json.address)
-      wallets.push({ name, address: autonomysAddress, keyfilePath: filepath })
+      const walletFile = await readWalletFile(filepath)
+      const name = (walletFile.keyring.meta?.name as string) || file.replace('.json', '')
+      const autonomysAddress = formatAddress(walletFile.keyring.address)
+      wallets.push({
+        name,
+        address: autonomysAddress,
+        evmAddress: walletFile.evmAddress,
+        keyfilePath: filepath,
+      })
     } catch {
       // Skip malformed files
     }
@@ -158,6 +217,9 @@ export async function listWallets(): Promise<WalletInfo[]> {
   return wallets
 }
 
+/**
+ * Load and decrypt a consensus keypair from a saved wallet.
+ */
 export async function loadWallet(name: string): Promise<KeyringPair> {
   await cryptoWaitReady()
 
@@ -166,11 +228,10 @@ export async function loadWallet(name: string): Promise<KeyringPair> {
     throw new Error(`Wallet "${name}" not found at ${filepath}`)
   }
 
-  const raw = await readFile(filepath, 'utf-8')
-  const json: KeyringPair$Json = JSON.parse(raw)
+  const walletFile = await readWalletFile(filepath)
 
   const keyring = new Keyring({ type: 'sr25519' })
-  const pair = keyring.addFromJson(json)
+  const pair = keyring.addFromJson(walletFile.keyring)
 
   const passphrase = await resolvePassphrase()
   try {
@@ -180,4 +241,55 @@ export async function loadWallet(name: string): Promise<KeyringPair> {
   }
 
   return pair
+}
+
+/**
+ * Get wallet info (both addresses) without decrypting. No passphrase needed.
+ */
+export async function getWalletInfo(name: string): Promise<WalletInfo> {
+  await cryptoWaitReady()
+
+  const filepath = keyfilePath(name)
+  if (!existsSync(filepath)) {
+    throw new Error(`Wallet "${name}" not found at ${filepath}`)
+  }
+
+  const walletFile = await readWalletFile(filepath)
+  const autonomysAddress = formatAddress(walletFile.keyring.address)
+
+  return {
+    name,
+    address: autonomysAddress,
+    evmAddress: walletFile.evmAddress,
+    keyfilePath: filepath,
+  }
+}
+
+/**
+ * Load a wallet's EVM address. No passphrase needed (stored in plaintext metadata).
+ */
+export async function loadEvmAddress(name: string): Promise<string> {
+  const info = await getWalletInfo(name)
+  return info.evmAddress
+}
+
+/**
+ * Load and decrypt a wallet's EVM private key. Requires passphrase.
+ * Uses ethers.js to decrypt the standard Ethereum V3 Keystore.
+ */
+export async function loadEvmPrivateKey(name: string): Promise<{ privateKey: string; address: string }> {
+  const filepath = keyfilePath(name)
+  if (!existsSync(filepath)) {
+    throw new Error(`Wallet "${name}" not found at ${filepath}`)
+  }
+
+  const walletFile = await readWalletFile(filepath)
+
+  const passphrase = await resolvePassphrase()
+  try {
+    const evmWallet = ethers.Wallet.fromEncryptedJsonSync(walletFile.evmKeystore, passphrase)
+    return { privateKey: evmWallet.privateKey, address: walletFile.evmAddress }
+  } catch {
+    throw new Error('Wrong passphrase — could not decrypt EVM key')
+  }
 }
