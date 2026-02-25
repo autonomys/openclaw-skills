@@ -53,7 +53,7 @@ Any other format (e.g. `0x...` EVM addresses) is rejected with a clear error for
 
 ### EVM addresses
 
-EVM commands (anchor, gethead) accept:
+EVM commands (anchor, gethead, evm-transfer, evm-balance) accept:
 
 - **`0x...`** — Standard Ethereum/EVM address format (42-character hex string).
 - **Wallet name** — Resolved to the wallet's stored EVM address.
@@ -92,6 +92,19 @@ Transfers tokens from a saved wallet to a destination consensus address. Require
 - `--to` — destination address (accepts `su...` or `5...` format)
 - `--amount` — amount in AI3/tAI3 (e.g. `1.5`)
 - Returns JSON: `{ success, txHash, blockHash, from, to, amount, network, symbol }`
+
+## EVM Transfer (Auto-EVM)
+
+```bash
+npx tsx auto-respawn.ts evm-transfer --from <wallet-name> --to <0x-address> --amount <tokens> [--network chronos|mainnet]
+```
+
+Sends native tokens from a saved wallet's EVM address to another EVM address on Auto-EVM. Useful for funding another agent so it can start anchoring without going through the faucet → consensus → bridge flow.
+
+- `--from` — name of the saved wallet (EVM private key is decrypted to sign the transaction)
+- `--to` — destination EVM address (`0x...`)
+- `--amount` — amount in AI3/tAI3 (e.g. `0.5`)
+- Returns JSON: `{ success, transactionHash, blockNumber, blockHash, gasUsed, from, to, amount, network, symbol }`
 
 ## Fund EVM (Consensus → Auto-EVM Bridge)
 

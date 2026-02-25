@@ -9,6 +9,7 @@ import { submitRemark } from './lib/remark.js'
 import { connectEvmProvider, createEvmSigner, getMemoryChainContract } from './lib/evm.js'
 import { anchorCid, getHeadCid } from './lib/memory-chain.js'
 import { fundEvm, withdrawToConsensus } from './lib/xdm.js'
+import { transferEvmTokens } from './lib/evm-transfer.js'
 import { normalizeEvmAddress } from './lib/address.js'
 
 const COMMANDS_WITH_SUBCOMMANDS = new Set(['wallet'])
@@ -266,6 +267,34 @@ async function handleWithdraw(flags: Record<string, string>): Promise<void> {
   }
 }
 
+async function handleEvmTransfer(flags: Record<string, string>): Promise<void> {
+  const from = flags.from
+  const to = flags.to
+  const amount = flags.amount
+
+  if (!from) error('--from <wallet-name> is required')
+  if (!to) error('--to <0x-address> is required')
+  if (!amount) error('--amount <tokens> is required')
+
+  const network = resolveNetwork(flags.network)
+
+  // Validate destination is an EVM address
+  const toAddress = normalizeEvmAddress(to)
+
+  // Load EVM private key from wallet (requires passphrase)
+  const { privateKey } = await loadEvmPrivateKey(from)
+
+  const provider = connectEvmProvider(network)
+
+  try {
+    const signer = createEvmSigner(privateKey, provider)
+    const result = await transferEvmTokens(signer, toAddress, amount, network)
+    output(result)
+  } finally {
+    await disconnectEvmProvider(provider)
+  }
+}
+
 async function handleEvmBalance(flags: Record<string, string>, positional: string[]): Promise<void> {
   const target = positional[0] || flags.address || flags.name
 
@@ -308,6 +337,9 @@ Commands:
   transfer --from <wallet> --to <address> --amount <n>   Transfer tokens (consensus)
            [--network chronos|mainnet]
 
+  evm-transfer --from <wallet> --to <0x-addr>            Transfer tokens (Auto-EVM)
+               --amount <n> [--network chronos|mainnet]
+
   fund-evm --from <wallet> --amount <n>                  Bridge tokens: consensus → Auto-EVM
            [--network chronos|mainnet]
 
@@ -345,6 +377,9 @@ async function main(): Promise<void> {
         break
       case 'transfer':
         await handleTransfer(flags)
+        break
+      case 'evm-transfer':
+        await handleEvmTransfer(flags)
         break
       case 'fund-evm':
         await handleFundEvm(flags)

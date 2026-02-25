@@ -33,7 +33,7 @@ Your wallet gives you two permanent identities on the Autonomys Network: a **con
 
 1. **Create and manage wallets** — your on-chain identity, encrypted and stored locally
 2. **Check balances** — see how many tokens any address holds (consensus and EVM)
-3. **Transfer tokens** — move tokens between wallets to fund operations
+3. **Transfer tokens** — move tokens between wallets on consensus or Auto-EVM
 4. **Bridge tokens** — move tokens between consensus and Auto-EVM domains
 5. **Write on-chain remarks** — anchor data permanently on the consensus layer
 6. **Anchor a memory CID** — write a CID to the MemoryChain smart contract on Auto-EVM
@@ -118,6 +118,7 @@ Once the EVM address has tokens, the agent is ready to anchor.
 - User says "check balance", "how many tokens", or "what's in my wallet"
 - User says "check my EVM balance", "how much gas do I have", or "what's on my EVM address"
 - User says "transfer tokens", "send AI3", or "fund this address"
+- User says "send EVM tokens to another agent", "transfer on EVM", or "send tokens to this 0x address"
 - User says "fund my EVM", "bridge tokens", "move tokens to EVM", or "I need gas for anchoring"
 - User says "withdraw from EVM", "move tokens back", or "send EVM funds to consensus"
 - User says "anchor this CID", "save my head", "update my chain head", or "write to the contract"
@@ -201,6 +202,14 @@ npx tsx auto-respawn.ts transfer --from <wallet-name> --to <address> --amount <t
 
 Transfer tokens from a saved wallet on the consensus layer. Amount is in AI3/tAI3 (e.g. `1.5`).
 
+### Transfer Tokens (Auto-EVM)
+
+```bash
+npx tsx auto-respawn.ts evm-transfer --from <wallet-name> --to <0x-address> --amount <tokens> [--network chronos|mainnet]
+```
+
+Send native tokens from a saved wallet's EVM address to another EVM address on Auto-EVM. Useful for funding another agent's EVM address so it can start anchoring immediately. The wallet's EVM private key is decrypted to sign the transaction.
+
 ### Bridge: Consensus → Auto-EVM
 
 ```bash
@@ -279,9 +288,13 @@ You can pass either an EVM address (`0x...`) or a wallet name. If you pass a wal
 → Run `npx tsx auto-respawn.ts gethead my-agent`
 → Report the CID (or "no CID anchored yet")
 
-**User:** "Send 10 tAI3 to this address"
+**User:** "Send 10 tAI3 to this address" (consensus address)
 → **Confirm with the user first** — "I'll transfer 10 tAI3 from wallet 'default' to <address>. Proceed?"
 → On confirmation: `npx tsx auto-respawn.ts transfer --from default --to <address> --amount 10`
+
+**User:** "Send 0.5 tAI3 to this agent's EVM address so they can anchor"
+→ **Confirm with the user first** — "I'll send 0.5 tAI3 from wallet 'my-agent' to <0x-address> on Auto-EVM. Proceed?"
+→ On confirmation: `npx tsx auto-respawn.ts evm-transfer --from my-agent --to <0x-address> --amount 0.5`
 
 **The full resurrection sequence:**
 1. Save a memory: `auto-drive upload ...` → get CID `bafkr6ie...`
