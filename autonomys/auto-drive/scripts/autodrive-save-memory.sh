@@ -13,6 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INPUT="${1:?Usage: autodrive-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]}"
 AGENT_NAME="${AGENT_NAME:-openclaw-agent}"
 STATE_FILE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace}/memory/autodrive-state.json"
+STATE_FILE_EXPLICIT=false
 
 shift
 while [[ $# -gt 0 ]]; do
@@ -22,10 +23,41 @@ while [[ $# -gt 0 ]]; do
       AGENT_NAME="$2"; shift 2 ;;
     --state-file)
       if [[ $# -lt 2 ]]; then echo "Error: --state-file requires a value" >&2; exit 1; fi
-      STATE_FILE="$2"; shift 2 ;;
+      STATE_FILE="$2"; STATE_FILE_EXPLICIT=true; shift 2 ;;
     *) shift ;;
   esac
 done
+
+# Validate explicit --state-file: reject traversal, resolve physically, verify within $HOME.
+# Skipped for the default path which derives from a trusted env var.
+if [[ "$STATE_FILE_EXPLICIT" == true ]]; then
+  if [[ "$STATE_FILE" == *..* ]]; then
+    echo "Error: State file path must not contain '..': $STATE_FILE" >&2; exit 1
+  fi
+  HOME_REAL="$(cd "$HOME" && pwd -P)"
+  # Convert to absolute, normalize $HOME to physical path.
+  if [[ "$STATE_FILE" != /* ]]; then
+    STATE_FILE_CHECK="$(pwd -P)/$STATE_FILE"
+  else
+    STATE_FILE_CHECK="$STATE_FILE"
+  fi
+  if [[ "$STATE_FILE_CHECK" == "$HOME/"* ]]; then
+    STATE_FILE_CHECK="$HOME_REAL/${STATE_FILE_CHECK#"$HOME/"}"
+  elif [[ "$STATE_FILE_CHECK" == "$HOME" ]]; then
+    STATE_FILE_CHECK="$HOME_REAL"
+  fi
+  # Resolve parent physically if it exists (catches symlinks).
+  STATE_FILE_DIR="$(dirname "$STATE_FILE_CHECK")"
+  STATE_FILE_BASE="$(basename "$STATE_FILE_CHECK")"
+  if [[ -d "$STATE_FILE_DIR" ]]; then
+    STATE_FILE_CHECK="$(cd "$STATE_FILE_DIR" && pwd -P)/$STATE_FILE_BASE"
+  fi
+  if [[ "$STATE_FILE_CHECK" != "$HOME_REAL/"* ]]; then
+    echo "Error: State file path must be within home directory" >&2
+    exit 1
+  fi
+  STATE_FILE="$STATE_FILE_CHECK"
+fi
 
 if [[ -z "${AUTO_DRIVE_API_KEY:-}" ]]; then
   echo "Error: AUTO_DRIVE_API_KEY not set." >&2

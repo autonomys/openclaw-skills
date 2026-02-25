@@ -16,6 +16,24 @@ if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
   exit 1
 fi
 
+# Validate output path: reject traversal, resolve physically, verify within $HOME.
+if [[ -n "$OUTPUT" ]]; then
+  if [[ "$OUTPUT" == *..* ]]; then
+    echo "Error: Output path must not contain '..': $OUTPUT" >&2; exit 1
+  fi
+  OUTPUT_DIR_PART="$(dirname "$OUTPUT")"
+  OUTPUT_BASE="$(basename "$OUTPUT")"
+  OUTPUT_RESOLVED="$(cd "$OUTPUT_DIR_PART" 2>/dev/null && pwd -P)/$OUTPUT_BASE" || {
+    echo "Error: Could not resolve output path — directory does not exist: $OUTPUT_DIR_PART" >&2; exit 1
+  }
+  HOME_REAL="$(cd "$HOME" && pwd -P)"
+  if [[ "$OUTPUT_RESOLVED" != "$HOME_REAL/"* ]]; then
+    echo "Error: Output path must be within home directory" >&2
+    exit 1
+  fi
+  OUTPUT="$OUTPUT_RESOLVED"
+fi
+
 GATEWAY="https://gateway.autonomys.xyz"
 DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
 

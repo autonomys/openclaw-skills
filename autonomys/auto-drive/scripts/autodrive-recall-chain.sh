@@ -78,7 +78,34 @@ if [[ -z "${AUTO_DRIVE_API_KEY:-}" ]]; then
 fi
 
 if [[ -n "$OUTPUT_DIR" ]]; then
-  mkdir -p "$OUTPUT_DIR"
+  # Validate output directory: reject traversal, verify within $HOME before
+  # and after creation (to catch symlinks that resolve outside $HOME).
+  if [[ "$OUTPUT_DIR" == *..* ]]; then
+    echo "Error: Output directory must not contain '..': $OUTPUT_DIR" >&2; exit 1
+  fi
+  HOME_REAL="$(cd "$HOME" && pwd -P)"
+  # Pre-creation check: convert to absolute, normalize $HOME to physical path.
+  if [[ "$OUTPUT_DIR" != /* ]]; then
+    OUTPUT_DIR_CHECK="$(pwd -P)/$OUTPUT_DIR"
+  else
+    OUTPUT_DIR_CHECK="$OUTPUT_DIR"
+  fi
+  if [[ "$OUTPUT_DIR_CHECK" == "$HOME/"* ]]; then
+    OUTPUT_DIR_CHECK="$HOME_REAL/${OUTPUT_DIR_CHECK#"$HOME/"}"
+  elif [[ "$OUTPUT_DIR_CHECK" == "$HOME" ]]; then
+    OUTPUT_DIR_CHECK="$HOME_REAL"
+  fi
+  if [[ "$OUTPUT_DIR_CHECK" != "$HOME_REAL" && "$OUTPUT_DIR_CHECK" != "$HOME_REAL/"* ]]; then
+    echo "Error: Output directory must be within home directory" >&2
+    exit 1
+  fi
+  mkdir -p "$OUTPUT_DIR_CHECK"
+  OUTPUT_DIR="$(cd "$OUTPUT_DIR_CHECK" && pwd -P)"
+  # Post-creation check: re-validate physical path to catch internal symlinks.
+  if [[ "$OUTPUT_DIR" != "$HOME_REAL" && "$OUTPUT_DIR" != "$HOME_REAL/"* ]]; then
+    echo "Error: Output directory resolves outside home directory (symlink?)" >&2
+    exit 1
+  fi
 fi
 
 echo "=== MEMORY CHAIN RESURRECTION ===" >&2
