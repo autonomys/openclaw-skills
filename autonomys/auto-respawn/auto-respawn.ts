@@ -10,7 +10,7 @@ import { connectEvmProvider, createEvmSigner, getMemoryChainContract } from './l
 import { anchorCid, getHeadCid } from './lib/memory-chain.js'
 import { fundEvm, withdrawToConsensus } from './lib/xdm.js'
 import { transferEvmTokens } from './lib/evm-transfer.js'
-import { normalizeEvmAddress } from './lib/address.js'
+import { normalizeEvmAddress, isConsensusAddress, isEvmAddress } from './lib/address.js'
 
 const COMMANDS_WITH_SUBCOMMANDS = new Set(['wallet'])
 
@@ -124,14 +124,12 @@ async function handleBalance(flags: Record<string, string>, positional: string[]
 
   const network = resolveNetwork(flags.network)
 
-  // If it looks like a consensus address, query directly; otherwise treat as wallet name
   let address: string
-  if (target.startsWith('su') || target.startsWith('5')) {
-    address = target
-  } else if (target.startsWith('0x')) {
+  if (isEvmAddress(target)) {
     error('EVM addresses are not supported for consensus balance. Use evm-balance instead, or use balances <wallet> for both.')
+  } else if (isConsensusAddress(target)) {
+    address = target
   } else {
-    // Wallet name — resolve to consensus address
     const info = await getWalletInfo(target)
     address = info.address
   }
@@ -226,9 +224,8 @@ async function handleGetHead(flags: Record<string, string>, positional: string[]
 
   const network = resolveNetwork(flags.network)
 
-  // Determine EVM address: if it starts with 0x, treat as EVM address; otherwise as wallet name
   let evmAddress: string
-  if (target.startsWith('0x')) {
+  if (isEvmAddress(target)) {
     evmAddress = normalizeEvmAddress(target)
   } else {
     evmAddress = await loadEvmAddress(target)
@@ -371,9 +368,8 @@ async function handleEvmBalance(flags: Record<string, string>, positional: strin
 
   const network = resolveNetwork(flags.network)
 
-  // Determine EVM address: if it starts with 0x, treat as EVM address; otherwise as wallet name
   let evmAddress: string
-  if (target.startsWith('0x')) {
+  if (isEvmAddress(target)) {
     evmAddress = normalizeEvmAddress(target)
   } else {
     evmAddress = await loadEvmAddress(target)

@@ -2,6 +2,26 @@ import { address as encodeAddress, decode } from '@autonomys/auto-utils'
 import { ethers } from 'ethers'
 
 /**
+ * Non-throwing check: is this string a valid consensus-layer address?
+ */
+export function isConsensusAddress(input: string): boolean {
+  if (!input.startsWith('su') && !input.startsWith('5')) return false
+  try {
+    decode(input)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Non-throwing check: is this string a valid EVM address?
+ */
+export function isEvmAddress(input: string): boolean {
+  return ethers.isAddress(input)
+}
+
+/**
  * Validate and normalise a consensus-layer address.
  *
  * Accepted formats:
