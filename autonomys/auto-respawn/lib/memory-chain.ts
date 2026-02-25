@@ -63,14 +63,18 @@ export async function anchorCid(
   const tx: ethers.TransactionResponse = await contract.updateHead(cid)
   const receipt = await tx.wait()
 
+  if (!receipt) {
+    throw new Error('Anchor transaction was sent but no receipt was received (transaction may have been replaced or dropped).')
+  }
+
   return {
-    success: !!receipt?.hash,
-    txHash: receipt?.hash,
-    blockHash: receipt?.blockHash,
+    success: receipt.status === 1,
+    txHash: receipt.hash,
+    blockHash: receipt.blockHash,
     cid,
     evmAddress,
     network,
-    gasUsed: receipt?.gasUsed?.toString(),
+    gasUsed: receipt.gasUsed.toString(),
   }
 }
 
