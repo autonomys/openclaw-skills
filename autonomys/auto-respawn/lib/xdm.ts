@@ -5,7 +5,7 @@
  * EVM → Consensus: uses `transferToConsensus` via the EVM precompile at 0x0800
  */
 
-import { transporterTransfer, transferToConsensus, getMinimumTransferAmount } from '@autonomys/auto-xdm'
+import { transporterTransfer, transferToConsensus } from '@autonomys/auto-xdm'
 import { signAndSendTx, ai3ToShannons, address as formatAddress } from '@autonomys/auto-utils'
 import type { ApiPromise } from '@polkadot/api'
 import type { KeyringPair } from '@polkadot/keyring/types'
@@ -120,15 +120,4 @@ export async function withdrawToConsensus(
   }
 
   return withdrawResult
-}
-
-/**
- * Query the minimum transfer amount for EVM → consensus transfers.
- * Returns the minimum in AI3 (human-readable).
- */
-export async function queryMinimumTransfer(provider: ethers.Provider): Promise<string> {
-  const minWei = await getMinimumTransferAmount(provider as any)
-  // Convert from wei to AI3 (divide by 10^18)
-  const ai3 = Number(minWei) / 1e18
-  return ai3.toString()
 }

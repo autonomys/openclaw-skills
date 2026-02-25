@@ -32,12 +32,17 @@ export async function transferEvmTokens(
   amount: string,
   network: NetworkId,
 ): Promise<EvmTransferResult> {
+  const provider = signer.provider
+  if (!provider) {
+    throw new Error('Signer has no provider — cannot estimate gas or check balance.')
+  }
+
   const amountWei = ethers.parseEther(amount)
 
   // Pre-check balance (amount + gas estimate for a simple transfer)
-  const balance = await signer.provider!.getBalance(signer.address)
+  const balance = await provider.getBalance(signer.address)
   const gasEstimate = 21000n // Standard ETH transfer gas
-  const feeData = await signer.provider!.getFeeData()
+  const feeData = await provider.getFeeData()
   const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas ?? 0n
   const totalNeeded = amountWei + gasEstimate * gasPrice
 

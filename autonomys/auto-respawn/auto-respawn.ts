@@ -52,6 +52,18 @@ function error(message: string, code = 1): never {
   process.exit(code)
 }
 
+/**
+ * Validate that an amount string is a positive number.
+ * Catches bad input early with a clear message instead of letting
+ * ethers.parseEther or ai3ToShannons throw a cryptic error.
+ */
+function validateAmount(amount: string): void {
+  const n = Number(amount)
+  if (Number.isNaN(n) || n <= 0) {
+    error(`Invalid amount: "${amount}". Must be a positive number (e.g. "1.5").`)
+  }
+}
+
 async function handleWallet(subcommand: string | undefined, flags: Record<string, string>): Promise<void> {
   switch (subcommand) {
     case 'create': {
@@ -142,6 +154,7 @@ async function handleTransfer(flags: Record<string, string>): Promise<void> {
   if (!from) error('--from <wallet-name> is required')
   if (!to) error('--to <address> is required')
   if (!amount) error('--amount <tokens> is required')
+  validateAmount(amount)
 
   const network = resolveNetwork(flags.network)
   const pair = await loadWallet(from)
@@ -239,6 +252,7 @@ async function handleFundEvm(flags: Record<string, string>): Promise<void> {
 
   if (!from) error('--from <wallet-name> is required')
   if (!amount) error('--amount <tokens> is required (amount in AI3/tAI3)')
+  validateAmount(amount)
 
   const network = resolveNetwork(flags.network)
 
@@ -262,6 +276,7 @@ async function handleWithdraw(flags: Record<string, string>): Promise<void> {
 
   if (!from) error('--from <wallet-name> is required')
   if (!amount) error('--amount <tokens> is required (amount in AI3/tAI3)')
+  validateAmount(amount)
 
   const network = resolveNetwork(flags.network)
 
@@ -288,6 +303,7 @@ async function handleEvmTransfer(flags: Record<string, string>): Promise<void> {
   if (!from) error('--from <wallet-name> is required')
   if (!to) error('--to <0x-address> is required')
   if (!amount) error('--amount <tokens> is required')
+  validateAmount(amount)
 
   const network = resolveNetwork(flags.network)
 
