@@ -4,6 +4,7 @@ description: Upload and download files to Autonomys Network permanent decentrali
 metadata:
   openclaw:
     emoji: "🧬"
+    primaryEnv: AUTO_DRIVE_API_KEY
     requires:
       bins: ["curl", "jq", "file"]
       env: ["AUTO_DRIVE_API_KEY"]
@@ -38,14 +39,23 @@ Permanent decentralized storage on the Autonomys Network with linked-list memory
 
 ### API Key
 
-Requires an `AUTO_DRIVE_API_KEY`. The agent should get its own free key at [ai3.storage](https://ai3.storage):
+Requires an `AUTO_DRIVE_API_KEY`. Run the guided setup script for the easiest path:
 
-1. Go to https://ai3.storage
-2. Sign in with **Google** or **GitHub** (SSO)
-3. Navigate to **Developers** in the left sidebar
-4. Click **Create API Key**
+```bash
+scripts/setup-auto-drive.sh
+```
 
-Set the key via environment variable or OpenClaw config:
+This opens [explorer.ai3.storage](https://explorer.ai3.storage/mainnet/drive/developers) in your browser, prompts for the key, saves it to `~/.openclaw/.env`, and verifies the connection.
+
+**Manual setup:**
+
+1. Navigate to **https://explorer.ai3.storage** (not `ai3.storage` — that's just the landing page)
+2. Check authentication: if the sidebar shows a "Log In" button or lock icons on My Files / Profile / Developers, you are not signed in
+3. **AI agent note:** You cannot complete OAuth yourself. Open the browser for the user and ask them to sign in via Google, GitHub, or Discord. Once the user confirms they're signed in, take over — or simply ask the user to paste the API key directly
+4. Once authenticated, click **Developers** in the left sidebar
+5. Click **Create API Key** and copy the generated key
+
+Then set the key via:
 
 - **Environment:** `export AUTO_DRIVE_API_KEY=your_key_here`
 - **OpenClaw config:** `skills.entries.auto-drive.apiKey`
@@ -164,9 +174,10 @@ If the agent's server dies, a new instance only needs the last CID to walk the e
 ## Important Notes
 
 - All data stored on Auto-Drive is **permanent and public** by default. Do not store secrets, private keys, or sensitive personal data.
-- The free API key has a **20 MB per month upload limit** on mainnet. Downloads are unlimited. Check remaining credits via `GET /subscriptions/credits`.
+- The free API key has a **20 MB per month upload limit** on mainnet. Downloads are unlimited. Check remaining credits via `GET /accounts/@me` or run `scripts/verify-setup.sh`.
 - An API key is required for uploads, memory saves, and chain recall. General file downloads work without one via the public gateway, but compressed files will not be decompressed.
 - The memory state file tracks `lastCid`, `lastUploadTimestamp`, and `chainLength`. Back up the `lastCid` value — it's your resurrection key.
+- The `autodrive-save-memory.sh` script **automatically pins the latest CID to `MEMORY.md`** if the file exists in the workspace. It creates an `## Auto-Drive Chain` section and updates it on each save. You do not need to track the latest CID in MEMORY.md manually — the script handles this.
 - Files are uploaded in a single chunk. The free tier's 20 MB/month limit is effectively a per-file ceiling — keep individual uploads well under that to preserve your monthly budget.
 - Gateway URL for any file: `https://gateway.autonomys.xyz/file/<CID>`
 - For true resurrection resilience, consider anchoring the latest CID on-chain via the Autonomys EVM — this makes recovery possible without keeping track of the head CID yourself. See [openclaw-memory-chain](https://github.com/autojeremy/openclaw-memory-chain) for an example contract implementation.
