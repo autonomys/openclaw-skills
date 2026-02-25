@@ -60,7 +60,7 @@ EVM commands (anchor, gethead) accept:
 
 Output always uses the canonical format for each layer: `su...` for consensus, `0x...` (checksummed) for EVM.
 
-## Balance
+## Balance (Consensus)
 
 ```bash
 npx tsx auto-respawn.ts balance <address> [--network chronos|mainnet]
@@ -70,18 +70,52 @@ Queries on-chain balance for any consensus address. No wallet or passphrase need
 
 Returns JSON: `{ address, free, reserved, frozen, total, network, symbol }`
 
-## Transfer
+## EVM Balance
+
+```bash
+npx tsx auto-respawn.ts evm-balance <0x-address-or-wallet-name> [--network chronos|mainnet]
+```
+
+Queries the native token balance of an EVM address on Auto-EVM. Accepts either an EVM address (`0x...`) or a wallet name. No passphrase needed — this is a read-only operation.
+
+Returns JSON: `{ evmAddress, balance, network, symbol }`
+
+## Transfer (Consensus)
 
 ```bash
 npx tsx auto-respawn.ts transfer --from <wallet-name> --to <address> --amount <tokens> [--network chronos|mainnet]
 ```
 
-Transfers tokens from a saved wallet to a destination address. Requires passphrase to decrypt the wallet.
+Transfers tokens from a saved wallet to a destination consensus address. Requires passphrase to decrypt the wallet.
 
 - `--from` — name of the saved wallet to send from
 - `--to` — destination address (accepts `su...` or `5...` format)
 - `--amount` — amount in AI3/tAI3 (e.g. `1.5`)
 - Returns JSON: `{ success, txHash, blockHash, from, to, amount, network, symbol }`
+
+## Fund EVM (Consensus → Auto-EVM Bridge)
+
+```bash
+npx tsx auto-respawn.ts fund-evm --from <wallet-name> --amount <tokens> [--network chronos|mainnet]
+```
+
+Bridges tokens from the consensus layer to the same wallet's EVM address on Auto-EVM via cross-domain messaging (XDM). Use this to get gas for `anchor` operations.
+
+- `--from` — name of the saved wallet (consensus keypair is decrypted to sign the extrinsic)
+- `--amount` — amount in AI3/tAI3 (e.g. `1`)
+- Returns JSON: `{ success, txHash, blockHash, from, toEvmAddress, amount, network, symbol }`
+
+## Withdraw (Auto-EVM → Consensus Bridge)
+
+```bash
+npx tsx auto-respawn.ts withdraw --from <wallet-name> --amount <tokens> [--network chronos|mainnet]
+```
+
+Bridges tokens from Auto-EVM back to the same wallet's consensus address. Uses the transporter precompile at `0x0800` on Auto-EVM.
+
+- `--from` — name of the saved wallet (EVM private key is decrypted to sign the transaction)
+- `--amount` — amount in AI3/tAI3 (e.g. `0.5`)
+- Returns JSON: `{ success, transactionHash, blockNumber, blockHash, gasUsed, fromEvmAddress, toConsensusAddress, amount, network, symbol }`
 
 ## Remark
 

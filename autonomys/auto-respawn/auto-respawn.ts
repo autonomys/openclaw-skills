@@ -3,10 +3,12 @@
 import { connectApi, disconnectApi, disconnectEvmProvider, resolveNetwork, isMainnet, type NetworkId } from './lib/network.js'
 import { createWallet, importWallet, listWallets, loadWallet, getWalletInfo, loadEvmAddress, loadEvmPrivateKey } from './lib/wallet.js'
 import { queryBalance } from './lib/balance.js'
+import { queryEvmBalance } from './lib/evm-balance.js'
 import { transferTokens } from './lib/transfer.js'
 import { submitRemark } from './lib/remark.js'
 import { connectEvmProvider, createEvmSigner, getMemoryChainContract } from './lib/evm.js'
 import { anchorCid, getHeadCid } from './lib/memory-chain.js'
+import { fundEvm, withdrawToConsensus } from './lib/xdm.js'
 import { normalizeEvmAddress } from './lib/address.js'
 
 const COMMANDS_WITH_SUBCOMMANDS = new Set(['wallet'])
@@ -217,6 +219,80 @@ async function handleGetHead(flags: Record<string, string>, positional: string[]
   }
 }
 
+async function handleFundEvm(flags: Record<string, string>): Promise<void> {
+  const from = flags.from
+  const amount = flags.amount
+
+  if (!from) error('--from <wallet-name> is required')
+  if (!amount) error('--amount <tokens> is required (amount in AI3/tAI3)')
+
+  const network = resolveNetwork(flags.network)
+
+  // Load both consensus keypair (to sign the XDM extrinsic) and EVM address (destination)
+  const pair = await loadWallet(from)
+  const evmAddress = await loadEvmAddress(from)
+
+  const api = await connectApi(network)
+
+  try {
+    const result = await fundEvm(api, pair, evmAddress, amount, network)
+    output(result)
+  } finally {
+    await disconnectApi(api)
+  }
+}
+
+async function handleWithdraw(flags: Record<string, string>): Promise<void> {
+  const from = flags.from
+  const amount = flags.amount
+
+  if (!from) error('--from <wallet-name> is required')
+  if (!amount) error('--amount <tokens> is required (amount in AI3/tAI3)')
+
+  const network = resolveNetwork(flags.network)
+
+  // Load EVM private key (to sign the precompile tx) and wallet info (for consensus address)
+  const { privateKey } = await loadEvmPrivateKey(from)
+  const info = await getWalletInfo(from)
+
+  const provider = connectEvmProvider(network)
+
+  try {
+    const signer = createEvmSigner(privateKey, provider)
+    const result = await withdrawToConsensus(signer, info.address, amount, network)
+    output(result)
+  } finally {
+    await disconnectEvmProvider(provider)
+  }
+}
+
+async function handleEvmBalance(flags: Record<string, string>, positional: string[]): Promise<void> {
+  const target = positional[0] || flags.address || flags.name
+
+  if (!target) {
+    error('EVM address or wallet name is required. Usage: evm-balance <0x-address-or-wallet-name> [--network chronos|mainnet]')
+  }
+
+  const network = resolveNetwork(flags.network)
+
+  // Determine EVM address: if it starts with 0x, treat as EVM address; otherwise as wallet name
+  let evmAddress: string
+  if (target.startsWith('0x')) {
+    evmAddress = normalizeEvmAddress(target)
+  } else {
+    evmAddress = await loadEvmAddress(target)
+  }
+
+  const provider = connectEvmProvider(network)
+
+  try {
+    const result = await queryEvmBalance(provider, evmAddress, network)
+    output(result)
+  } finally {
+    await disconnectEvmProvider(provider)
+  }
+}
+
 function printUsage(): void {
   console.error(`auto-respawn — Anchor agent identity on the Autonomys Network
 
@@ -226,9 +302,16 @@ Commands:
   wallet list                                            List saved wallets
   wallet info [--name <name>]                            Show wallet addresses (consensus + EVM)
 
-  balance <address> [--network chronos|mainnet]          Check wallet balance
+  balance <address> [--network chronos|mainnet]          Check consensus balance
+  evm-balance <0x-addr-or-wallet> [--network ...]        Check Auto-EVM balance
 
-  transfer --from <wallet> --to <address> --amount <n>   Transfer tokens
+  transfer --from <wallet> --to <address> --amount <n>   Transfer tokens (consensus)
+           [--network chronos|mainnet]
+
+  fund-evm --from <wallet> --amount <n>                  Bridge tokens: consensus → Auto-EVM
+           [--network chronos|mainnet]
+
+  withdraw --from <wallet> --amount <n>                  Bridge tokens: Auto-EVM → consensus
            [--network chronos|mainnet]
 
   remark --from <wallet> --data <string>                 Write on-chain remark
@@ -257,8 +340,17 @@ async function main(): Promise<void> {
       case 'balance':
         await handleBalance(flags, positional)
         break
+      case 'evm-balance':
+        await handleEvmBalance(flags, positional)
+        break
       case 'transfer':
         await handleTransfer(flags)
+        break
+      case 'fund-evm':
+        await handleFundEvm(flags)
+        break
+      case 'withdraw':
+        await handleWithdraw(flags)
         break
       case 'remark':
         await handleRemark(flags)

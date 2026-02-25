@@ -6,6 +6,7 @@
   "dependencies": {
     "@autonomys/auto-consensus": "^1.6.9",
     "@autonomys/auto-utils": "^1.6.9",
+    "@autonomys/auto-xdm": "^1.6.9",
     "ethers": "^6.16.0"
   },
   "devDependencies": {

@@ -15,8 +15,8 @@ auto-respawn uses both layers: consensus for wallets, balances, transfers, and r
 
 | Network | Token | Purpose | Consensus Explorer | EVM Explorer |
 |---------|-------|---------|-------------------|--------------|
-| Chronos (testnet) | tAI3 | Development and testing. Free tokens via faucet. | [Subscan](https://autonomys-chronos.subscan.io/) | — |
-| Mainnet | AI3 | Production. Real tokens with real value. | [Subscan](https://autonomys.subscan.io/) | — |
+| Chronos (testnet) | tAI3 | Development and testing. Free tokens via faucet. | [Subscan](https://autonomys-chronos.subscan.io/) | [Blockscout](https://explorer.auto-evm.chronos.autonomys.xyz/) |
+| Mainnet | AI3 | Production. Real tokens with real value. | [Subscan](https://autonomys.subscan.io/) | [Blockscout](https://explorer.auto-evm.mainnet.autonomys.xyz/) |
 
 auto-respawn defaults to Chronos. Mainnet operations require explicit `--network mainnet` and produce warnings.
 
@@ -72,6 +72,30 @@ Auto-EVM uses WebSocket RPC endpoints:
 - Mainnet: `wss://auto-evm.mainnet.autonomys.xyz/ws`
 
 These are resolved automatically by the SDK's `getNetworkDomainRpcUrls()`.
+
+## Cross-Domain Messaging (XDM)
+
+Tokens exist on both the consensus layer and Auto-EVM, but they're separate domains. Moving tokens between them requires cross-domain messaging via the Autonomys transporter.
+
+### Consensus → Auto-EVM
+
+Uses `transporterTransfer` from `@autonomys/auto-xdm`. The sender signs a consensus-layer extrinsic that credits a specified EVM address on Auto-EVM (domain ID 0).
+
+This is the typical funding flow: tokens arrive on consensus (from faucet, farming, or transfers), then get bridged to Auto-EVM to pay gas for smart contract operations like `anchor`.
+
+### Auto-EVM → Consensus
+
+Uses the transporter precompile at `0x0000000000000000000000000000000000000800` on Auto-EVM. The sender signs an EVM transaction that debits their EVM balance and credits a consensus address.
+
+The `@autonomys/auto-xdm` package provides `transferToConsensus()` which handles encoding and submission.
+
+### Token Flow for Agents
+
+Typical agent lifecycle:
+1. User funds the **consensus address** (faucet for testnet, farming/exchange for mainnet)
+2. Agent runs `fund-evm` to bridge tokens to Auto-EVM for gas
+3. Agent uses `anchor` to write CIDs to the MemoryChain contract (costs EVM gas)
+4. When done, agent can `withdraw` unused EVM tokens back to consensus
 
 ## Block Explorers
 
