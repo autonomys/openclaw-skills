@@ -107,10 +107,23 @@ async function handleWallet(subcommand: string | undefined, flags: Record<string
 }
 
 async function handleBalance(flags: Record<string, string>, positional: string[]): Promise<void> {
-  const address = positional[0] || flags.address
-  if (!address) error('Address is required. Usage: balance <address> [--network chronos|mainnet]')
+  const target = positional[0] || flags.address || flags.name
+  if (!target) error('Address or wallet name is required. Usage: balance <address-or-wallet> [--network chronos|mainnet]')
 
   const network = resolveNetwork(flags.network)
+
+  // If it looks like a consensus address, query directly; otherwise treat as wallet name
+  let address: string
+  if (target.startsWith('su') || target.startsWith('5')) {
+    address = target
+  } else if (target.startsWith('0x')) {
+    error('EVM addresses are not supported for consensus balance. Use evm-balance instead, or use balances <wallet> for both.')
+  } else {
+    // Wallet name — resolve to consensus address
+    const info = await getWalletInfo(target)
+    address = info.address
+  }
+
   const api = await connectApi(network)
 
   try {
@@ -295,6 +308,44 @@ async function handleEvmTransfer(flags: Record<string, string>): Promise<void> {
   }
 }
 
+async function handleBalances(flags: Record<string, string>, positional: string[]): Promise<void> {
+  const target = positional[0] || flags.name
+  if (!target) error('Wallet name is required. Usage: balances <wallet-name> [--network chronos|mainnet]')
+
+  const network = resolveNetwork(flags.network)
+  const info = await getWalletInfo(target)
+
+  // Query both balances concurrently
+  const api = await connectApi(network)
+  const provider = connectEvmProvider(network)
+
+  try {
+    const [consensus, evm] = await Promise.all([
+      queryBalance(api, info.address, network),
+      queryEvmBalance(provider, info.evmAddress, network),
+    ])
+
+    output({
+      name: target,
+      consensus: {
+        address: consensus.address,
+        free: consensus.free,
+        reserved: consensus.reserved,
+        total: consensus.total,
+      },
+      evm: {
+        address: evm.evmAddress,
+        balance: evm.balance,
+      },
+      network,
+      symbol: consensus.symbol,
+    })
+  } finally {
+    await disconnectApi(api)
+    await disconnectEvmProvider(provider)
+  }
+}
+
 async function handleEvmBalance(flags: Record<string, string>, positional: string[]): Promise<void> {
   const target = positional[0] || flags.address || flags.name
 
@@ -331,8 +382,9 @@ Commands:
   wallet list                                            List saved wallets
   wallet info [--name <name>]                            Show wallet addresses (consensus + EVM)
 
-  balance <address> [--network chronos|mainnet]          Check consensus balance
+  balance <address-or-wallet> [--network chronos|mainnet] Check consensus balance
   evm-balance <0x-addr-or-wallet> [--network ...]        Check Auto-EVM balance
+  balances <wallet-name> [--network chronos|mainnet]     Check both consensus + EVM balances
 
   transfer --from <wallet> --to <address> --amount <n>   Transfer tokens (consensus)
            [--network chronos|mainnet]
@@ -371,6 +423,9 @@ async function main(): Promise<void> {
         break
       case 'balance':
         await handleBalance(flags, positional)
+        break
+      case 'balances':
+        await handleBalances(flags, positional)
         break
       case 'evm-balance':
         await handleEvmBalance(flags, positional)

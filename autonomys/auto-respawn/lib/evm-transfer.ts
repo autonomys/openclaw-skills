@@ -22,6 +22,9 @@ export interface EvmTransferResult {
 
 /**
  * Send native tokens from an EVM wallet to another EVM address on Auto-EVM.
+ *
+ * Pre-checks the sender's balance before sending. If insufficient,
+ * throws with the available balance so the caller can act.
  */
 export async function transferEvmTokens(
   signer: ethers.Wallet,
@@ -30,6 +33,22 @@ export async function transferEvmTokens(
   network: NetworkId,
 ): Promise<EvmTransferResult> {
   const amountWei = ethers.parseEther(amount)
+
+  // Pre-check balance (amount + gas estimate for a simple transfer)
+  const balance = await signer.provider!.getBalance(signer.address)
+  const gasEstimate = 21000n // Standard ETH transfer gas
+  const feeData = await signer.provider!.getFeeData()
+  const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas ?? 0n
+  const totalNeeded = amountWei + gasEstimate * gasPrice
+
+  if (balance < totalNeeded) {
+    const symbol = tokenSymbol(network)
+    throw new Error(
+      `Insufficient EVM balance. ` +
+        `Sending ${amount} ${symbol} + gas requires ~${ethers.formatEther(totalNeeded)} ${symbol}, ` +
+        `but wallet has ${ethers.formatEther(balance)} ${symbol}.`,
+    )
+  }
 
   const tx = await signer.sendTransaction({
     to,

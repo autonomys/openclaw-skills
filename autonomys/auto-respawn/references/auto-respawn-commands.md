@@ -63,10 +63,10 @@ Output always uses the canonical format for each layer: `su...` for consensus, `
 ## Balance (Consensus)
 
 ```bash
-npx tsx auto-respawn.ts balance <address> [--network chronos|mainnet]
+npx tsx auto-respawn.ts balance <address-or-wallet-name> [--network chronos|mainnet]
 ```
 
-Queries on-chain balance for any consensus address. No wallet or passphrase needed — this is a read-only operation.
+Queries on-chain consensus balance. Accepts a consensus address (`su...` or `5...`) or a wallet name. No passphrase needed — this is a read-only operation.
 
 Returns JSON: `{ address, free, reserved, frozen, total, network, symbol }`
 
@@ -79,6 +79,18 @@ npx tsx auto-respawn.ts evm-balance <0x-address-or-wallet-name> [--network chron
 Queries the native token balance of an EVM address on Auto-EVM. Accepts either an EVM address (`0x...`) or a wallet name. No passphrase needed — this is a read-only operation.
 
 Returns JSON: `{ evmAddress, balance, network, symbol }`
+
+If the balance is zero, includes a `hint` field suggesting `fund-evm`.
+
+## Balances (Both Layers)
+
+```bash
+npx tsx auto-respawn.ts balances <wallet-name> [--network chronos|mainnet]
+```
+
+Queries both consensus and EVM balances for a wallet in a single call. Requires a wallet name (not a raw address). No passphrase needed.
+
+Returns JSON: `{ name, consensus: { address, free, reserved, total }, evm: { address, balance }, network, symbol }`
 
 ## Transfer (Consensus)
 
@@ -154,7 +166,8 @@ Writes a CID to the MemoryChain smart contract on Auto-EVM. The contract stores 
 
 - `--from` — name of the saved wallet (EVM private key is decrypted to sign the transaction)
 - `--cid` — the CID string to anchor (e.g. `bafkr6ie...`)
-- Returns JSON: `{ success, txHash, blockHash, cid, evmAddress, network }`
+- Returns JSON: `{ success, txHash, blockHash, cid, evmAddress, network, gasUsed }`
+- Pre-checks EVM balance and estimates gas before sending. If insufficient, fails with a `fund-evm` hint.
 - Contract source: https://github.com/autojeremy/openclaw-memory-chain
 
 ## Get Head (Auto-EVM)

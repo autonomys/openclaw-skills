@@ -11,6 +11,7 @@ export interface EvmBalanceResult {
   balance: string
   network: NetworkId
   symbol: string
+  hint?: string
 }
 
 /**
@@ -22,10 +23,16 @@ export async function queryEvmBalance(
   network: NetworkId,
 ): Promise<EvmBalanceResult> {
   const balanceWei = await provider.getBalance(evmAddress)
-  return {
+  const result: EvmBalanceResult = {
     evmAddress,
     balance: ethers.formatEther(balanceWei),
     network,
     symbol: tokenSymbol(network),
   }
+
+  if (balanceWei === 0n) {
+    result.hint = `No EVM balance. To fund this address, run: fund-evm --from <wallet> --amount 1 --network ${network}`
+  }
+
+  return result
 }

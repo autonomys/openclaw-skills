@@ -100,14 +100,11 @@ This sends 1 tAI3 from the consensus address to the same wallet's EVM address vi
 ### 4. Verify Setup
 
 ```bash
-# Check consensus balance
-npx tsx auto-respawn.ts balance <consensus-address>
-
-# Check EVM balance
-npx tsx auto-respawn.ts evm-balance my-agent
+# Check both balances in one call
+npx tsx auto-respawn.ts balances my-agent
 
 # Test a read (free, no gas needed)
-npx tsx auto-respawn.ts gethead <evm-address>
+npx tsx auto-respawn.ts gethead my-agent
 ```
 
 Once the EVM address has tokens, the agent is ready to anchor.
@@ -115,7 +112,7 @@ Once the EVM address has tokens, the agent is ready to anchor.
 ## When To Use This Skill
 
 - User says "create a wallet", "set up my on-chain identity", or "get an address"
-- User says "check balance", "how many tokens", or "what's in my wallet"
+- User says "check balance", "how many tokens", "what's in my wallet", or "show my balances"
 - User says "check my EVM balance", "how much gas do I have", or "what's on my EVM address"
 - User says "transfer tokens", "send AI3", or "fund this address"
 - User says "send EVM tokens to another agent", "transfer on EVM", or "send tokens to this 0x address"
@@ -181,10 +178,10 @@ Show detailed info for a single wallet: consensus address, EVM address, and keyf
 ### Check Balance (Consensus)
 
 ```bash
-npx tsx auto-respawn.ts balance <address> [--network chronos|mainnet]
+npx tsx auto-respawn.ts balance <address-or-wallet-name> [--network chronos|mainnet]
 ```
 
-Check any address's token balance on the consensus layer. No wallet or passphrase needed — this is read-only.
+Check token balance on the consensus layer. Accepts a consensus address (`su...` or `5...`) or a wallet name. No passphrase needed — this is read-only.
 
 ### Check Balance (Auto-EVM)
 
@@ -192,7 +189,15 @@ Check any address's token balance on the consensus layer. No wallet or passphras
 npx tsx auto-respawn.ts evm-balance <0x-address-or-wallet-name> [--network chronos|mainnet]
 ```
 
-Check the native token balance of an EVM address on Auto-EVM. Accepts either an EVM address (`0x...`) or a wallet name. No passphrase needed — this is read-only.
+Check the native token balance of an EVM address on Auto-EVM. Accepts either an EVM address (`0x...`) or a wallet name. No passphrase needed — this is read-only. If the balance is zero, includes a hint to run `fund-evm`.
+
+### Check Both Balances
+
+```bash
+npx tsx auto-respawn.ts balances <wallet-name> [--network chronos|mainnet]
+```
+
+Check both consensus and EVM balances for a wallet in a single call. Use this to get a full picture of a wallet's funding state. No passphrase needed.
 
 ### Transfer Tokens
 
@@ -246,7 +251,7 @@ npx tsx auto-respawn.ts anchor --from <wallet-name> --cid <cid> [--network chron
 
 Write a CID to the MemoryChain smart contract on Auto-EVM. This is the core respawn operation — it stores your CID on-chain, linked to your EVM address.
 
-The wallet's EVM private key is decrypted and used to sign the transaction. Requires passphrase.
+Pre-checks the wallet's EVM balance and estimates gas before sending. If the balance is too low, fails with a suggestion to run `fund-evm`. The wallet's EVM private key is decrypted and used to sign the transaction. Requires passphrase.
 
 ### Read the Last Anchored CID
 
@@ -268,9 +273,8 @@ You can pass either an EVM address (`0x...`) or a wallet name. If you pass a wal
 → Run `npx tsx auto-respawn.ts wallet info --name my-agent`
 
 **User:** "Check my balance"
-→ Run `npx tsx auto-respawn.ts wallet list` to find the address
-→ Run `npx tsx auto-respawn.ts balance <address>` (consensus balance)
-→ Run `npx tsx auto-respawn.ts evm-balance my-agent` (EVM balance)
+→ Run `npx tsx auto-respawn.ts balances my-agent` (both layers in one call)
+→ Or individually: `balance my-agent` (consensus) and `evm-balance my-agent` (EVM)
 
 **User:** "Fund my EVM address for anchoring"
 → Run `npx tsx auto-respawn.ts fund-evm --from my-agent --amount 1`
