@@ -2,6 +2,7 @@ import { balance } from '@autonomys/auto-consensus'
 import { shannonsToAi3 } from '@autonomys/auto-utils'
 import type { ApiPromise } from '@polkadot/api'
 import { type NetworkId, tokenSymbol } from './network.js'
+import { normalizeAddress } from './address.js'
 
 export interface BalanceResult {
   address: string
@@ -23,7 +24,8 @@ export async function queryBalance(
   addr: string,
   network: NetworkId,
 ): Promise<BalanceResult> {
-  const bal = await balance(api, addr)
+  const normalized = normalizeAddress(addr)
+  const bal = await balance(api, normalized)
 
   const free = bal.free
   const reserved = bal.reserved
@@ -31,7 +33,7 @@ export async function queryBalance(
   const total = free + reserved
 
   return {
-    address: addr,
+    address: normalized,
     free: formatShannons(free),
     reserved: formatShannons(reserved),
     frozen: formatShannons(frozen),

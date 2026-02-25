@@ -1,8 +1,9 @@
-import { transfer, events } from '@autonomys/auto-consensus'
+import { transfer } from '@autonomys/auto-consensus'
 import { signAndSendTx, ai3ToShannons, address as formatAddress } from '@autonomys/auto-utils'
 import type { ApiPromise } from '@polkadot/api'
 import type { KeyringPair } from '@polkadot/keyring/types'
 import { type NetworkId, tokenSymbol, isMainnet } from './network.js'
+import { normalizeAddress } from './address.js'
 
 export interface TransferResult {
   success: boolean
@@ -23,17 +24,21 @@ export async function transferTokens(
   amount: string,
   network: NetworkId,
 ): Promise<TransferResult> {
+  const normalizedTo = normalizeAddress(to)
   const shannons = ai3ToShannons(amount)
-  const tx = transfer(api, to, shannons)
+  const tx = transfer(api, normalizedTo, shannons)
 
-  const result = await signAndSendTx(sender, tx, {}, events.transfer)
+  // Use default event check (system.ExtrinsicSuccess) rather than
+  // events.transfer which requires all four sub-events and can fail
+  // on some runtime configurations.
+  const result = await signAndSendTx(sender, tx)
 
   const transferResult: TransferResult = {
     success: result.success,
     txHash: result.txHash,
     blockHash: result.blockHash,
     from: formatAddress(sender.address),
-    to,
+    to: normalizedTo,
     amount,
     network,
     symbol: tokenSymbol(network),
