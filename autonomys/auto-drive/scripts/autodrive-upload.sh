@@ -6,35 +6,11 @@
 
 set -euo pipefail
 
-# Platform-aware install hint
-_install_hint() {
-  case "$(uname -s 2>/dev/null)" in
-    Linux*)            echo "  Install: sudo apt install $*" >&2 ;;
-    Darwin*)           echo "  Install: brew install $*" >&2 ;;
-    MINGW*|MSYS*|CYGWIN*) echo "  Install: winget install $* OR choco install $*" >&2 ;;
-    *)                 echo "  Install: $*" >&2 ;;
-  esac
-}
-
-# Warn Git Bash users early — some tools may be missing or behave differently
-case "$(uname -s 2>/dev/null)" in
-  MINGW*|MSYS*|CYGWIN*)
-    echo "Note: Running in Git Bash. For full compatibility, consider using WSL." >&2
-    echo "WSL setup: https://learn.microsoft.com/en-us/windows/wsl/install" >&2
-    ;;
-esac
-
-# Check required dependencies
-_missing=()
-command -v curl &>/dev/null || _missing+=(curl)
-command -v jq   &>/dev/null || _missing+=(jq)
-if [[ ${#_missing[@]} -gt 0 ]]; then
-  echo "Error: Missing required tools: ${_missing[*]}" >&2
-  _install_hint "${_missing[@]}"
-  exit 1
-fi
-
-API_BASE="https://mainnet.auto-drive.autonomys.xyz/api"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./_lib.sh
+source "$SCRIPT_DIR/_lib.sh"
+ad_warn_git_bash
+ad_require_tools curl jq
 
 FILE_PATH="${1:?Usage: autodrive-upload.sh <file_path> [--json] [--compress]}"
 IS_JSON=false
@@ -88,7 +64,7 @@ else
     '{filename: $fn, mimeType: $mt, uploadOptions: {}}')
 fi
 
-RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$API_BASE/uploads/file" \
+RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$AD_API_BASE/uploads/file" \
   "${AUTH_HEADERS[@]}" \
   -H "Content-Type: application/json" \
   -d "$UPLOAD_BODY")
@@ -110,7 +86,7 @@ fi
 
 # Step 2: Upload chunk
 echo "Uploading file data..." >&2
-RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$API_BASE/uploads/file/$UPLOAD_ID/chunk" \
+RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$AD_API_BASE/uploads/file/$UPLOAD_ID/chunk" \
   "${AUTH_HEADERS[@]}" \
   -F "file=@$FILE_PATH" \
   -F "index=0")
@@ -124,7 +100,7 @@ fi
 
 # Step 3: Complete upload → get CID
 echo "Completing upload..." >&2
-RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$API_BASE/uploads/$UPLOAD_ID/complete" \
+RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$AD_API_BASE/uploads/$UPLOAD_ID/complete" \
   "${AUTH_HEADERS[@]}")
 HTTP_CODE=$(echo "$RESPONSE" | tail -1)
 BODY=$(echo "$RESPONSE" | sed '$d')
