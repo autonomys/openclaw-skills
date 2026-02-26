@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Traverse the memory chain from a CID, downloading each experience
-# Usage: automemory-recall-chain.sh [cid] [--limit N] [--output-dir DIR]
+# Usage: automemory-recall-chain.sh [cid] [--limit N] [--output-dir DIR] [--restore-state]
 # Output: Each experience as JSON to stdout (newest first), or to files in output dir
 # Env: AUTO_DRIVE_API_KEY (required — memories are stored compressed by default and the authenticated API decompresses server-side)
 
@@ -21,6 +21,7 @@ fi
 CID=""
 LIMIT=50
 OUTPUT_DIR=""
+RESTORE_STATE=false
 
 # Parse arguments
 ARGS=("$@")
@@ -52,6 +53,10 @@ while [[ $IDX -lt ${#ARGS[@]} ]]; do
       OUTPUT_DIR="${ARGS[$((IDX+1))]}"
       IDX=$((IDX + 2))
       ;;
+    --restore-state)
+      RESTORE_STATE=true
+      IDX=$((IDX + 1))
+      ;;
     *)
       if [[ -z "$CID" ]]; then
         CID="${ARGS[$IDX]}"
@@ -69,7 +74,7 @@ if [[ -z "$CID" ]]; then
   fi
   if [[ -z "$CID" ]]; then
     echo "Error: No CID provided and no state file found." >&2
-    echo "Usage: automemory-recall-chain.sh <cid> [--limit N] [--output-dir DIR]" >&2
+    echo "Usage: automemory-recall-chain.sh <cid> [--limit N] [--output-dir DIR] [--restore-state]" >&2
     exit 1
   fi
 fi
@@ -121,6 +126,7 @@ echo "=== MEMORY CHAIN RESURRECTION ===" >&2
 echo "Starting from: $CID" >&2
 echo "" >&2
 
+HEAD_CID="$CID"
 COUNT=0
 VISITED=""
 while [[ -n "$CID" && "$CID" != "null" && $COUNT -lt $LIMIT ]]; do
@@ -195,6 +201,19 @@ while [[ -n "$CID" && "$CID" != "null" && $COUNT -lt $LIMIT ]]; do
   fi
   COUNT=$((COUNT + 1))
 done
+
+# Restore state file so subsequent save-memory calls continue the chain
+if [[ "$RESTORE_STATE" == true && $COUNT -gt 0 ]]; then
+  RS_STATE_FILE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace}/memory/automemory-state.json"
+  mkdir -p "$(dirname "$RS_STATE_FILE")"
+  jq -n \
+    --arg cid "$HEAD_CID" \
+    --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")" \
+    --argjson len "$COUNT" \
+    '{lastCid: $cid, lastUploadTimestamp: $ts, chainLength: $len}' > "$RS_STATE_FILE"
+  chmod 600 "$RS_STATE_FILE"
+  echo "State restored: lastCid=$HEAD_CID, chainLength=$COUNT" >&2
+fi
 
 echo "" >&2
 echo "=== CHAIN COMPLETE ===" >&2
