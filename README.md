@@ -17,11 +17,23 @@ Each skill lives in its own directory under `autonomys/` with a `SKILL.md` that 
 
 ### auto-memory
 
-Permanent decentralized storage via the Autonomys Auto Drive API. Upload and download files by CID, and save agent memories as a linked-list chain — each entry pointing to the previous one — so an agent's full history can be reconstructed from a single CID.
+Permanent decentralized storage via the Autonomys Auto Drive API. Gives your agent:
+
+- **Permanent file storage** — upload any file to the Autonomys Network and get back a CID. The data is distributed across the network and never expires.
+- **Memory chains** — save experiences as a linked list where each entry points to the previous one via CID. An agent's full history can be reconstructed from a single CID.
+- **Local CID tracking** — the skill maintains a local state file (`automemory-state.json`) with the latest head CID, chain length, and timestamp. This means auto-memory is fully functional on its own — no wallet, no tokens, no on-chain transactions needed.
+
+auto-memory only needs an Auto Drive API key (free at [ai3.storage](https://ai3.storage)). It's the right starting point for any agent that wants permanent memory.
 
 ### auto-respawn
 
-On-chain identity and memory anchoring on the Autonomys Network. Create wallets (consensus + EVM), manage balances, bridge tokens between layers, and write memory chain CIDs to the MemoryChain smart contract. Combined with auto-memory, this completes the resurrection loop: an agent can lose all local state and recover its entire memory from just its on-chain address.
+On-chain identity and memory anchoring on the Autonomys Network. Gives your agent:
+
+- **Permanent identity** — a wallet with two addresses (consensus `su...` and EVM `0x...`) derived from a single recovery phrase. This is the agent's verifiable on-chain identity.
+- **Token management** — check balances, transfer tokens, and bridge between the consensus layer and Auto-EVM.
+- **On-chain CID anchoring** — write the latest memory chain head CID to the MemoryChain smart contract. This makes the head CID recoverable from any machine using just the agent's EVM address — no local state needed.
+
+auto-respawn **requires auto-memory** (or equivalent) to have something worth anchoring. It completes the resurrection loop: auto-memory builds the chain, auto-respawn anchors the pointer on-chain, and a new agent instance can recover everything from just its address. The reverse dependency does not apply — auto-memory works independently with local CID tracking.
 
 ### auto-drive (deprecated)
 
