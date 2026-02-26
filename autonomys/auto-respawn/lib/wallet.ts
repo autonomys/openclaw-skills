@@ -80,7 +80,10 @@ async function readWalletFile(filepath: string): Promise<WalletFile> {
   return JSON.parse(raw) as WalletFile
 }
 
-export async function resolvePassphrase(): Promise<string> {
+export async function resolvePassphrase(passphrase?: string): Promise<string> {
+  // 0. Explicit argument (e.g. --passphrase flag)
+  if (passphrase) return passphrase
+
   // 1. Environment variable
   const envPassphrase = process.env.AUTO_RESPAWN_PASSPHRASE
   if (envPassphrase) return envPassphrase
@@ -126,17 +129,18 @@ async function encryptAndSave(
   mnemonic: string,
   name: string,
   filepath: string,
+  passphrase?: string,
 ): Promise<{ address: string; evmAddress: string }> {
-  const passphrase = await resolvePassphrase()
+  const resolved = await resolvePassphrase(passphrase)
 
   // Encrypt consensus key (Polkadot PKCS8: scrypt + XSalsa20-Poly1305)
-  const keyringJson = pair.toJson(passphrase)
+  const keyringJson = pair.toJson(resolved)
   keyringJson.meta = { ...keyringJson.meta, name, whenCreated: Date.now() }
 
   // Derive EVM key and encrypt it via ethers V3 Keystore
   const evm = deriveEvmKey(mnemonic)
   const evmWallet = new ethers.Wallet(evm.privateKey)
-  const evmKeystore = evmWallet.encryptSync(passphrase)
+  const evmKeystore = evmWallet.encryptSync(resolved)
 
   const walletFile: WalletFile = {
     keyring: keyringJson,
@@ -149,7 +153,7 @@ async function encryptAndSave(
   return { address: formatAddress(pair.address), evmAddress: evm.address }
 }
 
-export async function createWallet(name: string): Promise<CreatedWallet> {
+export async function createWallet(name: string, passphrase?: string): Promise<CreatedWallet> {
   await cryptoWaitReady()
   await ensureWalletsDir()
 
@@ -161,12 +165,12 @@ export async function createWallet(name: string): Promise<CreatedWallet> {
   const wallet = sdkGenerateWallet()
   if (!wallet.keyringPair) throw new Error('Failed to generate wallet keypair')
 
-  const { address, evmAddress } = await encryptAndSave(wallet.keyringPair, wallet.mnemonic, name, filepath)
+  const { address, evmAddress } = await encryptAndSave(wallet.keyringPair, wallet.mnemonic, name, filepath, passphrase)
 
   return { name, address, evmAddress, mnemonic: wallet.mnemonic, keyfilePath: filepath }
 }
 
-export async function importWallet(name: string, mnemonic: string): Promise<WalletInfo> {
+export async function importWallet(name: string, mnemonic: string, passphrase?: string): Promise<WalletInfo> {
   await cryptoWaitReady()
   await ensureWalletsDir()
 
@@ -178,7 +182,7 @@ export async function importWallet(name: string, mnemonic: string): Promise<Wall
   const wallet = sdkSetupWallet({ mnemonic })
   if (!wallet.keyringPair) throw new Error('Failed to setup wallet keypair from mnemonic')
 
-  const { address, evmAddress } = await encryptAndSave(wallet.keyringPair, mnemonic, name, filepath)
+  const { address, evmAddress } = await encryptAndSave(wallet.keyringPair, mnemonic, name, filepath, passphrase)
 
   return { name, address, evmAddress, keyfilePath: filepath }
 }

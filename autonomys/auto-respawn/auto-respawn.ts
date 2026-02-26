@@ -71,7 +71,7 @@ async function handleWallet(subcommand: string | undefined, flags: Record<string
   switch (subcommand) {
     case 'create': {
       const name = flags.name || 'default'
-      const result = await createWallet(name)
+      const result = await createWallet(name, flags.passphrase)
       // Output mnemonic to stderr so it's visible to the user but separable from JSON output
       console.error('')
       console.error('=== IMPORTANT: BACKUP YOUR RECOVERY PHRASE ===')
@@ -98,7 +98,7 @@ async function handleWallet(subcommand: string | undefined, flags: Record<string
       const mnemonic = flags.mnemonic
       if (!name) error('--name is required for wallet import')
       if (!mnemonic) error('--mnemonic is required for wallet import')
-      const result = await importWallet(name, mnemonic)
+      const result = await importWallet(name, mnemonic, flags.passphrase)
       output(result)
       break
     }

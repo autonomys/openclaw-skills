@@ -136,9 +136,12 @@ Once the EVM address has tokens, the agent is ready to anchor.
 
 Wallet operations that involve signing (transfers, remarks, anchoring) or creating/importing wallets require a passphrase to encrypt/decrypt the wallet keyfile. Set it via:
 
+- **Flag:** `--passphrase your_passphrase` on `wallet create` or `wallet import`
 - **Environment:** `export AUTO_RESPAWN_PASSPHRASE=your_passphrase`
 - **File:** Write it to `~/.openclaw/auto-respawn/.passphrase`
 - **Interactive:** If running in a terminal, you'll be prompted
+
+The `--passphrase` flag is useful for scripted or headless setups where you want to create a wallet in a single command. For signing operations (transfers, anchoring, etc.), use the environment variable or file methods.
 
 ### Network
 
@@ -152,7 +155,7 @@ Defaults to **Chronos testnet** (tAI3 tokens). For mainnet (real AI3 tokens):
 ### Create a Wallet
 
 ```bash
-npx tsx auto-respawn.ts wallet create [--name <name>]
+npx tsx auto-respawn.ts wallet create [--name <name>] [--passphrase <passphrase>]
 ```
 
 Creates a new wallet with an encrypted keyfile. Derives both a consensus (`su...`) and EVM (`0x...`) address from the same mnemonic. The 12-word recovery phrase is displayed **once** — the user must back it up immediately. Default wallet name is `default`.
@@ -160,7 +163,7 @@ Creates a new wallet with an encrypted keyfile. Derives both a consensus (`su...
 ### Import a Wallet
 
 ```bash
-npx tsx auto-respawn.ts wallet import --name <name> --mnemonic "<12 words>"
+npx tsx auto-respawn.ts wallet import --name <name> --mnemonic "<12 words>" [--passphrase <passphrase>]
 ```
 
 Import an existing wallet from a recovery phrase. Derives and stores the EVM address.
