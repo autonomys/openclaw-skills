@@ -115,60 +115,22 @@ export async function resolvePassphrase(): Promise<string> {
   )
 }
 
-export async function createWallet(name: string): Promise<CreatedWallet> {
-  await cryptoWaitReady()
-  await ensureWalletsDir()
-
-  const filepath = keyfilePath(name)
-  if (existsSync(filepath)) {
-    throw new Error(`Wallet "${name}" already exists at ${filepath}`)
-  }
-
-  const wallet = sdkGenerateWallet()
-  if (!wallet.keyringPair) throw new Error('Failed to generate wallet keypair')
+/**
+ * Encrypt both keys (consensus + EVM) and persist the wallet file.
+ *
+ * Shared by createWallet and importWallet — any change to the file format,
+ * encryption scheme, or stored fields only needs updating here.
+ */
+async function encryptAndSave(
+  pair: KeyringPair,
+  mnemonic: string,
+  name: string,
+  filepath: string,
+): Promise<{ address: string; evmAddress: string }> {
   const passphrase = await resolvePassphrase()
 
   // Encrypt consensus key (Polkadot PKCS8: scrypt + XSalsa20-Poly1305)
-  const keyringJson = wallet.keyringPair.toJson(passphrase)
-  keyringJson.meta = { ...keyringJson.meta, name, whenCreated: Date.now() }
-
-  // Derive EVM key and encrypt it via ethers V3 Keystore
-  const evm = deriveEvmKey(wallet.mnemonic)
-  const evmWallet = new ethers.Wallet(evm.privateKey)
-  const evmKeystore = evmWallet.encryptSync(passphrase)
-
-  const walletFile: WalletFile = {
-    keyring: keyringJson,
-    evmAddress: evm.address,
-    evmKeystore,
-  }
-
-  await writeFile(filepath, JSON.stringify(walletFile, null, 2), { mode: 0o600 })
-
-  return {
-    name,
-    address: wallet.address,
-    evmAddress: evm.address,
-    mnemonic: wallet.mnemonic,
-    keyfilePath: filepath,
-  }
-}
-
-export async function importWallet(name: string, mnemonic: string): Promise<WalletInfo> {
-  await cryptoWaitReady()
-  await ensureWalletsDir()
-
-  const filepath = keyfilePath(name)
-  if (existsSync(filepath)) {
-    throw new Error(`Wallet "${name}" already exists at ${filepath}`)
-  }
-
-  const wallet = sdkSetupWallet({ mnemonic })
-  if (!wallet.keyringPair) throw new Error('Failed to setup wallet keypair from mnemonic')
-  const passphrase = await resolvePassphrase()
-
-  // Encrypt consensus key (Polkadot PKCS8: scrypt + XSalsa20-Poly1305)
-  const keyringJson = wallet.keyringPair.toJson(passphrase)
+  const keyringJson = pair.toJson(passphrase)
   keyringJson.meta = { ...keyringJson.meta, name, whenCreated: Date.now() }
 
   // Derive EVM key and encrypt it via ethers V3 Keystore
@@ -184,12 +146,41 @@ export async function importWallet(name: string, mnemonic: string): Promise<Wall
 
   await writeFile(filepath, JSON.stringify(walletFile, null, 2), { mode: 0o600 })
 
-  return {
-    name,
-    address: wallet.address,
-    evmAddress: evm.address,
-    keyfilePath: filepath,
+  return { address: formatAddress(pair.address), evmAddress: evm.address }
+}
+
+export async function createWallet(name: string): Promise<CreatedWallet> {
+  await cryptoWaitReady()
+  await ensureWalletsDir()
+
+  const filepath = keyfilePath(name)
+  if (existsSync(filepath)) {
+    throw new Error(`Wallet "${name}" already exists at ${filepath}`)
   }
+
+  const wallet = sdkGenerateWallet()
+  if (!wallet.keyringPair) throw new Error('Failed to generate wallet keypair')
+
+  const { address, evmAddress } = await encryptAndSave(wallet.keyringPair, wallet.mnemonic, name, filepath)
+
+  return { name, address, evmAddress, mnemonic: wallet.mnemonic, keyfilePath: filepath }
+}
+
+export async function importWallet(name: string, mnemonic: string): Promise<WalletInfo> {
+  await cryptoWaitReady()
+  await ensureWalletsDir()
+
+  const filepath = keyfilePath(name)
+  if (existsSync(filepath)) {
+    throw new Error(`Wallet "${name}" already exists at ${filepath}`)
+  }
+
+  const wallet = sdkSetupWallet({ mnemonic })
+  if (!wallet.keyringPair) throw new Error('Failed to setup wallet keypair from mnemonic')
+
+  const { address, evmAddress } = await encryptAndSave(wallet.keyringPair, mnemonic, name, filepath)
+
+  return { name, address, evmAddress, keyfilePath: filepath }
 }
 
 export async function listWallets(): Promise<WalletInfo[]> {
