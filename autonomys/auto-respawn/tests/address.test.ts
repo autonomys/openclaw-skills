@@ -40,9 +40,9 @@ describe('isEvmAddress', () => {
     expect(isEvmAddress(VALID_EVM_LOWER)).toBe(true)
   })
 
-  it('accepts addresses without 0x prefix (ethers is lenient)', () => {
-    // ethers.isAddress accepts bare hex of correct length
-    expect(isEvmAddress('d8dA6BF26964aF9D7eEd9e03E53415D37aA96045')).toBe(true)
+  it('rejects addresses without 0x prefix', () => {
+    // Must require 0x prefix to stay consistent with normalizeEvmAddress
+    expect(isEvmAddress('d8dA6BF26964aF9D7eEd9e03E53415D37aA96045')).toBe(false)
   })
 
   it('rejects too-short addresses', () => {

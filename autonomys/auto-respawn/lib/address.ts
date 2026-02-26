@@ -16,9 +16,10 @@ export function isConsensusAddress(input: string): boolean {
 
 /**
  * Non-throwing check: is this string a valid EVM address?
+ * Requires the 0x prefix to stay consistent with normalizeEvmAddress.
  */
 export function isEvmAddress(input: string): boolean {
-  return ethers.isAddress(input)
+  return input.startsWith('0x') && ethers.isAddress(input)
 }
 
 /**
