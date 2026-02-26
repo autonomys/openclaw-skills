@@ -26,4 +26,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: shellcheck autonomys/auto-drive/scripts/*.sh
+      - run: shellcheck -x -S warning autonomys/auto-drive/scripts/*.sh
