@@ -57,10 +57,13 @@ function error(message: string, code = 1): never {
  * Catches bad input early with a clear message instead of letting
  * ethers.parseEther or ai3ToShannons throw a cryptic error.
  */
-function validateAmount(amount: string): void {
+function validateAmount(amount: string, minimum?: number): void {
   const n = Number(amount)
   if (!Number.isFinite(n) || n <= 0) {
     error(`Invalid amount: "${amount}". Must be a positive number (e.g. "1.5").`)
+  }
+  if (minimum != null && n < minimum) {
+    error(`Amount ${amount} is below the minimum of ${minimum}. Cross-domain transfers require at least ${minimum} AI3/tAI3.`)
   }
 }
 
@@ -249,7 +252,7 @@ async function handleFundEvm(flags: Record<string, string>): Promise<void> {
 
   if (!from) error('--from <wallet-name> is required')
   if (!amount) error('--amount <tokens> is required (amount in AI3/tAI3)')
-  validateAmount(amount)
+  validateAmount(amount, 1)
 
   const network = resolveNetwork(flags.network)
 
@@ -273,7 +276,7 @@ async function handleWithdraw(flags: Record<string, string>): Promise<void> {
 
   if (!from) error('--from <wallet-name> is required')
   if (!amount) error('--amount <tokens> is required (amount in AI3/tAI3)')
-  validateAmount(amount)
+  validateAmount(amount, 1)
 
   const network = resolveNetwork(flags.network)
 

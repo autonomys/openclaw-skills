@@ -12,9 +12,7 @@ import type { KeyringPair } from '@polkadot/keyring/types'
 import type { ethers } from 'ethers'
 import type { NetworkId } from './network.js'
 import { tokenSymbol, isMainnet } from './network.js'
-
-/** Auto-EVM domain ID on Autonomys */
-const AUTO_EVM_DOMAIN_ID = 0
+import { AUTO_EVM_DOMAIN_ID } from './evm.js'
 
 export interface FundEvmResult {
   success: boolean

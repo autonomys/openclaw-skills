@@ -47,7 +47,10 @@ export async function anchorCid(
 
   // Check balance against estimated cost
   const feeData = await provider.getFeeData()
-  const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas ?? 0n
+  const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas
+  if (gasPrice == null) {
+    throw new Error('Unable to determine gas price from network. Please try again.')
+  }
   const estimatedCost = estimatedGas * gasPrice
   const balance = await provider.getBalance(evmAddress)
 

@@ -43,7 +43,10 @@ export async function transferEvmTokens(
   const balance = await provider.getBalance(signer.address)
   const gasEstimate = 21000n // Standard ETH transfer gas
   const feeData = await provider.getFeeData()
-  const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas ?? 0n
+  const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas
+  if (gasPrice == null) {
+    throw new Error('Unable to determine gas price from network. Please try again.')
+  }
   const totalNeeded = amountWei + gasEstimate * gasPrice
 
   if (balance < totalNeeded) {

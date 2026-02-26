@@ -3,7 +3,7 @@ import { getNetworkDomainRpcUrls } from '@autonomys/auto-utils'
 import type { NetworkId } from './network.js'
 
 /** Auto-EVM domain ID on Autonomys */
-const EVM_DOMAIN_ID = '0'
+export const AUTO_EVM_DOMAIN_ID = 0
 
 /**
  * Default MemoryChain contract addresses per network.
@@ -56,7 +56,7 @@ export const MEMORY_CHAIN_ABI = [
  * Get the Auto-EVM WebSocket RPC URL for a given network.
  */
 export function getEvmRpcUrl(network: NetworkId): string {
-  const urls = getNetworkDomainRpcUrls({ networkId: network, domainId: EVM_DOMAIN_ID })
+  const urls = getNetworkDomainRpcUrls({ networkId: network, domainId: String(AUTO_EVM_DOMAIN_ID) })
   if (!urls || urls.length === 0) {
     throw new Error(`No Auto-EVM RPC URL found for network "${network}"`)
   }
