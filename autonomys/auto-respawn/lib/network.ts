@@ -47,5 +47,5 @@ export async function disconnectApi(api: ApiPromise): Promise<void> {
  * Cleanly close an ethers WebSocket provider.
  */
 export async function disconnectEvmProvider(provider: ethers.WebSocketProvider): Promise<void> {
-  provider.destroy()
+  await provider.destroy()
 }
