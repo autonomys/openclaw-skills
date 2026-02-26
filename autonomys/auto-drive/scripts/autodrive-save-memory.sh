@@ -91,7 +91,7 @@ if [[ -f "$STATE_FILE" ]]; then
   CHAIN_LENGTH=$(jq -r '.chainLength // 0' "$STATE_FILE" 2>/dev/null || echo "0")
   [[ -z "$PREVIOUS_CID" ]] && PREVIOUS_CID="null"
   # Reject a corrupted/tampered state file CID rather than propagating it into the chain
-  if [[ "$PREVIOUS_CID" != "null" && ! "$PREVIOUS_CID" =~ ^baf[a-z2-7]{50,100}$ ]]; then
+  if [[ "$PREVIOUS_CID" != "null" ]] && ! ad_valid_cid "$PREVIOUS_CID"; then
     echo "Warning: State file contains invalid CID '$PREVIOUS_CID' — starting new chain" >&2
     PREVIOUS_CID="null"
     CHAIN_LENGTH=0
@@ -127,8 +127,8 @@ if [[ -z "$CID" ]]; then
   exit 1
 fi
 
-# Validate CID format (Autonomys CIDs are base32-encoded, starting with "bafy" or "bafk")
-if [[ ! "$CID" =~ ^baf[a-z2-7]{50,100}$ ]]; then
+# Validate CID format
+if ! ad_valid_cid "$CID"; then
   echo "Error: Invalid CID format returned: $CID" >&2
   exit 1
 fi

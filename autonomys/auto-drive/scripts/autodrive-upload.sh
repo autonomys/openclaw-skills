@@ -119,9 +119,7 @@ if [[ -z "$CID" || "$CID" == "null" ]]; then
 fi
 
 # Validate CID format to prevent command injection and chain corruption
-# Autonomys CIDs are base32-encoded and must start with "baf" followed by valid base32 chars
-# This matches the validation pattern used in other scripts (download, save-memory, recall-chain)
-if [[ ! "$CID" =~ ^baf[a-z2-7]{50,100}$ ]]; then
+if ! ad_valid_cid "$CID"; then
   echo "Error: Invalid CID format returned: $CID" >&2
   exit 1
 fi

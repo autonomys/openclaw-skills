@@ -53,6 +53,15 @@ ad_require_tools() {
   fi
 }
 
+# -- Validation helpers ------------------------------------------------------
+
+# Autonomys CID format: base32-encoded, starting with "baf".
+AD_CID_RE='^baf[a-z2-7]{50,100}$'
+
+# Return 0 if the argument looks like a valid Autonomys CID, 1 otherwise.
+# Usage: ad_valid_cid "$CID"
+ad_valid_cid() { [[ "${1:-}" =~ $AD_CID_RE ]]; }
+
 # -- Functions ----------------------------------------------------------------
 
 # Verify an API key against the Auto-Drive accounts endpoint.
