@@ -9,7 +9,7 @@ metadata:
     emoji: "🔄"
     requires:
       anyBins: ["node"]
-      env: ["AUTO_RESPAWN_PASSPHRASE"]
+      env: ["AUTO_RESPAWN_PASSPHRASE", "AUTO_RESPAWN_PASSPHRASE_FILE", "AUTO_RESPAWN_NETWORK", "AUTO_RESPAWN_CONTRACT_ADDRESS"]
     install:
       - id: deps
         kind: node
