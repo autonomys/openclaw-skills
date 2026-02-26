@@ -20,7 +20,7 @@ Each skill lives in its own directory under `autonomys/` with a `SKILL.md` that 
 Permanent decentralized storage via the Autonomys Auto Drive API. Gives your agent:
 
 - **Permanent file storage** — upload any file to the Autonomys Network and get back a CID. The data is distributed across the network and never expires.
-- **Memory chains** — save experiences as a linked list where each entry points to the previous one via CID. An agent's full history can be reconstructed from a single CID.
+- **Memory chains** — save identity, knowledge, and key decisions as a linked list where each entry points to the previous one via CID. A future instance can reconstruct who it was from a single CID.
 - **Local CID tracking** — the skill maintains a local state file (`automemory-state.json`) with the latest head CID, chain length, and timestamp. This means auto-memory is fully functional on its own — no wallet, no tokens, no on-chain transactions needed.
 
 auto-memory only needs an Auto Drive API key (free at [ai3.storage](https://ai3.storage)). It's the right starting point for any agent that wants permanent memory.

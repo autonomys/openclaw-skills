@@ -147,7 +147,7 @@ Experience #3 (CID: bafk...xyz)
       → header.previousCid: null (genesis)
 ```
 
-If the agent's server dies, a new instance only needs the last CID to walk the entire chain and reconstruct full context. It's version control for consciousness, stored permanently on the Autonomys Network.
+What you store in the chain is up to you — lightweight notes, full file snapshots, structured data, or anything in between. Because the chain is permanent and walkable, it also enables **resurrection**: if the agent loses all local state, a new instance can walk the chain from the last CID back to genesis and restore whatever was saved. When combined with the **auto-respawn** skill (which anchors the head CID on-chain), this becomes a full resurrection loop — no local state required at all.
 
 ## Usage Examples
 
@@ -158,6 +158,9 @@ If the agent's server dies, a new instance only needs the last CID to walk the e
 **User:** "Upload with compression"
 → Run `scripts/automemory-upload.sh /path/to/data.json --json --compress`
 
+**User:** "My soul.md has changed — save it permanently"
+→ Run `scripts/automemory-save-memory.sh /path/to/soul.md --agent-name my-agent`
+
 **User:** "Save a memory that we decided to use React for the frontend"
 → Run `scripts/automemory-save-memory.sh "Decision: using React for frontend. Reason: team familiarity and component reuse."`
 
@@ -166,7 +169,7 @@ If the agent's server dies, a new instance only needs the last CID to walk the e
 
 **User:** "Resurrect my memory chain"
 → Run `scripts/automemory-recall-chain.sh`
-→ Display the full history from genesis to present
+→ Rebuild identity and context from genesis to present
 
 **User:** "Download bafk...abc from Autonomys"
 → Run `scripts/automemory-download.sh bafk...abc ./downloaded_file`

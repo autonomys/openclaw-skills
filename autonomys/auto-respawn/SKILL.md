@@ -50,6 +50,12 @@ This is the core primitive. When used with the auto-memory skill (permanent memo
 
 The contract is your insurance policy. Your EVM address + the MemoryChain contract = instant access to your entire history, from any machine, at any time.
 
+### What to store for resurrection
+
+auto-memory doesn't prescribe what goes into the chain — agents are free to store whatever they find useful. But when auto-respawn is in play, the expectation is that the agent can restore itself to a roughly equivalent state on fresh hardware with no local files. That raises the bar on what's worth saving.
+
+Identity files (like `soul.md` or character configurations), long-term memory, and significant decisions with their reasoning are more valuable in the chain than routine logs or ephemeral details. The more complete the chain, the more fully the agent comes back after resurrection.
+
 ### Why Not Just Remarks?
 
 `system.remark` writes data to the consensus layer, but there's no query mechanism — you'd need to scan the entire chain to find your last CID. The MemoryChain contract on Auto-EVM gives you `gethead`: a single read call that returns the latest CID instantly.

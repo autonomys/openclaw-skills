@@ -6,6 +6,10 @@ Agent memories are stored as a **linked list on permanent decentralized storage*
 
 This means an agent can be fully reconstructed from a single piece of information: the CID of its most recent experience.
 
+### What to store
+
+What goes into the chain is up to the agent — lightweight notes, full file snapshots, structured data, or anything worth keeping permanently. Because the chain is permanent and walkable, it also enables resurrection: a future instance can start from the head CID (whether read from the local state file or retrieved on-chain via the **auto-respawn** skill) and walk the entire chain to restore whatever was saved.
+
 ## Experience Structure
 
 Each memory node follows the Autonomys Agents format:
