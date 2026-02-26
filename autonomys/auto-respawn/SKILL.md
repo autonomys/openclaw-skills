@@ -8,7 +8,7 @@ metadata:
   openclaw:
     emoji: "🔄"
     requires:
-      anyBins: ["node", "bun"]
+      anyBins: ["node"]
       env: []
     install:
       - id: deps
@@ -61,6 +61,24 @@ Identity files (like `soul.md` or character configurations), long-term memory, a
 `system.remark` writes data to the consensus layer, but there's no query mechanism — you'd need to scan the entire chain to find your last CID. The MemoryChain contract on Auto-EVM gives you `gethead`: a single read call that returns the latest CID instantly.
 
 Use `remark` for permanent breadcrumbs. Use `anchor` for the respawn primitive.
+
+## Post-Install Setup (CLI Users)
+
+If you installed via `clawhub install` (not the desktop app), you need to install Node.js dependencies before first use:
+
+```bash
+cd <skill-directory>/autonomys/auto-respawn
+./setup.sh
+```
+
+Or manually:
+
+```bash
+cd <skill-directory>/autonomys/auto-respawn
+npm install
+```
+
+The desktop app handles this automatically. The CLI does not execute install steps — it only downloads and extracts the skill.
 
 ## Getting Started (Onboarding)
 
