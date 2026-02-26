@@ -26,4 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: shellcheck -x -S warning autonomys/auto-drive/scripts/*.sh
+      - name: Lint shell scripts
+        run: |
+          # Check all scripts except _lib.sh (library sourced by others, not run directly).
+          # -x follows source directives so _lib.sh is validated in context.
+          find autonomys/auto-drive/scripts -name '*.sh' ! -name '_lib.sh' -print0 \
+            | xargs -0 shellcheck -x -S warning
