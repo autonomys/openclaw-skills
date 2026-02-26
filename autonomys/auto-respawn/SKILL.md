@@ -150,23 +150,41 @@ Once the EVM address has tokens, the agent is ready to anchor.
 
 ## Configuration
 
+### Local Storage
+
+This skill stores data under `~/.openclaw/auto-respawn/`:
+
+- **`wallets/<name>.json`** — encrypted wallet keyfiles (consensus + EVM keys). Directory created with mode `0700`, files with mode `0600`.
+- **`.passphrase`** — optional passphrase file (mode `0600`). Used automatically when present.
+
+No data is stored outside this directory.
+
 ### Passphrase
 
-Wallet operations that involve signing (transfers, remarks, anchoring) or creating/importing wallets require a passphrase to encrypt/decrypt the wallet keyfile. Set it via:
+Wallet operations that involve signing (transfers, remarks, anchoring) or creating/importing wallets require a passphrase to encrypt/decrypt the wallet keyfile. Resolution order:
 
-- **Flag:** `--passphrase your_passphrase` on `wallet create` or `wallet import`
-- **Environment:** `export AUTO_RESPAWN_PASSPHRASE=your_passphrase`
-- **File:** Write it to `~/.openclaw/auto-respawn/.passphrase`
-- **Interactive:** If running in a terminal, you'll be prompted
+1. **Flag:** `--passphrase your_passphrase` on `wallet create` or `wallet import`
+2. **Environment:** `AUTO_RESPAWN_PASSPHRASE`
+3. **File:** `AUTO_RESPAWN_PASSPHRASE_FILE` (defaults to `~/.openclaw/auto-respawn/.passphrase`)
+4. **Interactive:** If running in a terminal, you'll be prompted
 
-The `--passphrase` flag is useful for scripted or headless setups where you want to create a wallet in a single command. For signing operations (transfers, anchoring, etc.), use the environment variable or file methods.
+The `--passphrase` flag is useful for scripted or headless setups where you want to create a wallet in a single command. For signing operations (transfers, anchoring, etc.), use the environment variable or file methods. On shared machines, prefer the passphrase file (with restricted permissions) over environment variables.
 
 ### Network
 
 Defaults to **Chronos testnet** (tAI3 tokens). For mainnet (real AI3 tokens):
 
 - **Flag:** `--network mainnet` on any command
-- **Environment:** `export AUTO_RESPAWN_NETWORK=mainnet`
+- **Environment:** `AUTO_RESPAWN_NETWORK`
+
+### Contract Address
+
+The MemoryChain contract address is set per network:
+
+- **Chronos:** `0x5fa47C8F3B519deF692BD9C87179d69a6f4EBf11`
+- **Mainnet:** `0x51DAedAFfFf631820a4650a773096A69cB199A3c`
+
+Override with `AUTO_RESPAWN_CONTRACT_ADDRESS` if you deploy your own contract.
 
 ## Core Operations
 
