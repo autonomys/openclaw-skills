@@ -6,20 +6,23 @@ Project guidance for Claude Code working in the openclaw-skills repo.
 
 OpenClaw skills give AI agents permanent memory and on-chain identity on the Autonomys Network. The repo contains two complementary skills:
 
-- **auto-drive** — permanent decentralized storage via the Autonomys Auto-Drive API. Stores files and builds linked-list memory chains of CIDs.
+- **auto-memory** — permanent decentralized storage via the Autonomys Auto Drive API. Stores files and builds linked-list memory chains of CIDs.
 - **auto-respawn** — on-chain identity and memory anchoring. Manages wallets, token balances, cross-domain bridges, and writes head CIDs to the MemoryChain smart contract.
 
-Together they form the **resurrection loop**: auto-drive saves what matters, auto-respawn anchors the pointer on-chain, and a new agent instance can recover everything from the chain.
+Together they form the **resurrection loop**: auto-memory saves what matters, auto-respawn anchors the pointer on-chain, and a new agent instance can recover everything from the chain.
+
+> **Note:** `auto-drive` is the former name of `auto-memory`. The old directory is preserved for backward compatibility but is no longer maintained.
 
 ## Repo structure
 
 ```
 autonomys/
-├── auto-drive/          # Shell scripts — permanent storage and memory chains
+├── auto-memory/         # Shell scripts — permanent storage and memory chains
 │   ├── SKILL.md         # Skill interface definition
 │   ├── scripts/         # Shell scripts (upload, download, save-memory, recall-chain)
 │   │   └── _lib.sh      # Shared library sourced by other scripts (not run directly)
 │   └── references/      # API and network reference docs
+├── auto-drive/          # ⚠️ Deprecated — renamed to auto-memory
 └── auto-respawn/        # TypeScript — on-chain identity and memory anchoring
     ├── SKILL.md         # Skill interface definition
     ├── auto-respawn.ts  # CLI entry point
@@ -45,12 +48,12 @@ npm run lint           # eslint .
 npx tsx auto-respawn.ts <command>  # Run the CLI
 ```
 
-### auto-drive (shell scripts)
+### auto-memory (shell scripts)
 
-Scripts live in `autonomys/auto-drive/scripts/`. Lint with:
+Scripts live in `autonomys/auto-memory/scripts/`. Lint with:
 
 ```bash
-shellcheck -x -S warning autonomys/auto-drive/scripts/<script>.sh
+shellcheck -x -S warning autonomys/auto-memory/scripts/<script>.sh
 ```
 
 `_lib.sh` is a library sourced by other scripts — don't run or lint it directly. The `-x` flag lets shellcheck follow `source` directives to validate it in context.
@@ -73,7 +76,7 @@ GitHub Actions runs on PRs and pushes to `main` (`.github/workflows/ci.yml`):
 - CLI outputs structured JSON on stdout, human-readable errors to stderr
 - `package-lock.json` is gitignored — this is intentional since skills install via `npx`
 
-### Shell (auto-drive)
+### Shell (auto-memory)
 
 - All scripts use `set -euo pipefail`
 - Shellcheck clean at warning level (`-S warning`)
@@ -115,7 +118,7 @@ WebSocket providers must be properly cleaned up. Always `await provider.destroy(
 
 Each skill's `SKILL.md` is the authoritative reference for agents. In brief:
 
-- **auto-drive** works standalone — it stores files and builds memory chains using the Auto-Drive API. Requires an `AUTO_DRIVE_API_KEY`.
-- **auto-respawn** provides the on-chain identity layer — wallets, balances, transfers, and CID anchoring. It requires auto-drive (or similar) to have something worth anchoring.
+- **auto-memory** works standalone — it stores files and builds memory chains using the Auto Drive API. Requires an `AUTO_DRIVE_API_KEY`.
+- **auto-respawn** provides the on-chain identity layer — wallets, balances, transfers, and CID anchoring. It requires auto-memory (or similar) to have something worth anchoring.
 
-The two skills are complementary but auto-drive is independently useful without auto-respawn.
+The two skills are complementary but auto-memory is independently useful without auto-respawn.

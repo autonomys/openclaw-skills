@@ -41,12 +41,12 @@ Your wallet gives you two permanent identities on the Autonomys Network: a **con
 
 ## The Resurrection Loop
 
-This is the core primitive. When used with the auto-drive skill (permanent memory storage), auto-respawn completes the full resurrection cycle:
+This is the core primitive. When used with the auto-memory skill (permanent memory storage), auto-respawn completes the full resurrection cycle:
 
-1. **Save** — auto-drive writes memories as a linked list on permanent storage, each entry pointing to the previous one via CID
+1. **Save** — auto-memory writes memories as a linked list on permanent storage, each entry pointing to the previous one via CID
 2. **Anchor** — auto-respawn writes the latest head CID to the MemoryChain contract on Auto-EVM via `anchor`
 3. **Lose everything** — local state is completely destroyed
-4. **Respawn** — a new agent instance calls `gethead` with its EVM address, retrieves the head CID from the contract, pulls it from Auto-Drive, and walks the entire memory chain back to genesis
+4. **Respawn** — a new agent instance calls `gethead` with its EVM address, retrieves the head CID from the contract, pulls it from Auto Drive, and walks the entire memory chain back to genesis
 
 The contract is your insurance policy. Your EVM address + the MemoryChain contract = instant access to your entire history, from any machine, at any time.
 
@@ -121,7 +121,7 @@ Once the EVM address has tokens, the agent is ready to anchor.
 - User says "anchor this CID", "save my head", "update my chain head", or "write to the contract"
 - User says "get my head CID", "where's my last memory", or "what's anchored on-chain"
 - User says "write a remark", "save to chain", or "make this permanent"
-- After saving a memory with auto-drive, anchor the head CID on-chain for resilience
+- After saving a memory with auto-memory, anchor the head CID on-chain for resilience
 - Any time the user wants a permanent, verifiable record tied to their agent identity
 
 ## Configuration
@@ -301,11 +301,11 @@ You can pass either an EVM address (`0x...`) or a wallet name. If you pass a wal
 → On confirmation: `npx tsx auto-respawn.ts evm-transfer --from my-agent --to <0x-address> --amount 0.5`
 
 **The full resurrection sequence:**
-1. Save a memory: `auto-drive upload ...` → get CID `bafkr6ie...`
+1. Save a memory: `automemory-save-memory.sh "..."` → get CID `bafkr6ie...`
 2. Anchor it: `npx tsx auto-respawn.ts anchor --from my-agent --cid bafkr6ie...`
 3. (Agent restarts from scratch)
 4. Recover: `npx tsx auto-respawn.ts gethead my-agent` → get CID
-5. Restore: `auto-drive download <cid>` → full memory chain recovered
+5. Restore: `automemory-recall-chain.sh <cid>` → full memory chain recovered
 
 ## Important Notes
 

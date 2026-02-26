@@ -1,9 +1,6 @@
-> **⚠️ DEPRECATED:** This skill has been renamed to **auto-memory**. Use `autonomys/auto-memory/` instead.
-> This copy is preserved for backward compatibility but is no longer maintained.
-
 ---
-name: auto-drive
-description: Upload and download files to Autonomys Network permanent decentralized storage via Auto-Drive. Save memories as a linked-list chain for resurrection — rebuild full agent context from a single CID.
+name: auto-memory
+description: Upload and download files to permanent decentralized storage on the Autonomys Network via Auto Drive. Save memories as a linked-list chain for resurrection — rebuild full agent context from a single CID.
 metadata:
   openclaw:
     emoji: "🧬"
@@ -19,21 +16,21 @@ metadata:
         label: "Install jq (brew)"
 ---
 
-# Auto-Drive Skill
+# Auto-Memory Skill
 
 Permanent decentralized storage on the Autonomys Network with linked-list memory chains for agent resurrection.
 
 ## What This Skill Does
 
-1. **Upload files** to Auto-Drive and get back a CID (Content Identifier) — a permanent, immutable address on the Autonomys distributed storage network.
-2. **Download files** from Auto-Drive using a CID — uses the authenticated API if a key is set, otherwise falls back to the public gateway.
+1. **Upload files** to Auto Drive and get back a CID (Content Identifier) — a permanent, immutable address on the Autonomys distributed storage network.
+2. **Download files** from Auto Drive using a CID — uses the authenticated API if a key is set, otherwise falls back to the public gateway.
 3. **Save memories as a chain** — each memory entry is a JSON experience with a `header.previousCid` pointer, forming a linked list stored permanently on-chain.
 4. **Resurrect from a chain** — given the latest CID, walk the chain backwards to reconstruct full agent history.
 
 ## When To Use This Skill
 
-- User says "save this to Auto-Drive" or "upload to Autonomys" or "store permanently"
-- User says "download from Auto-Drive" or provides a CID to retrieve
+- User says "save this to Auto-Memory" or "upload to Autonomys" or "store permanently"
+- User says "download from Auto-Memory" or provides a CID to retrieve
 - User says "save memory", "remember this permanently", or "checkpoint"
 - User says "resurrect", "recall chain", "rebuild memory", or "load history"
 - Any time the user wants data stored permanently and immutably on a decentralized network
@@ -45,7 +42,7 @@ Permanent decentralized storage on the Autonomys Network with linked-list memory
 Requires an `AUTO_DRIVE_API_KEY`. Run the guided setup script for the easiest path:
 
 ```bash
-scripts/setup-auto-drive.sh
+scripts/setup-auto-memory.sh
 ```
 
 This opens [explorer.ai3.storage](https://explorer.ai3.storage/mainnet/drive/developers) in your browser, prompts for the key, saves it to `~/.openclaw/.env`, and verifies the connection.
@@ -61,7 +58,7 @@ This opens [explorer.ai3.storage](https://explorer.ai3.storage/mainnet/drive/dev
 Then set the key via:
 
 - **Environment:** `export AUTO_DRIVE_API_KEY=your_key_here`
-- **OpenClaw config:** `skills.entries.auto-drive.apiKey`
+- **OpenClaw config:** `skills.entries.auto-memory.apiKey`
 
 The API key is required for uploading, saving memories, and recalling the memory chain. It is optional for general file downloads — without it, the public gateway is used and files are returned as stored (i.e. compressed files will not be decompressed).
 
@@ -70,10 +67,10 @@ The API key is required for uploading, saving memories, and recalling the memory
 ### Upload a File
 
 ```bash
-scripts/autodrive-upload.sh <filepath> [--json] [--compress]
+scripts/automemory-upload.sh <filepath> [--json] [--compress]
 ```
 
-Uploads a file to Auto-Drive mainnet using the 3-step upload protocol (single chunk).
+Uploads a file to Auto Drive mainnet using the 3-step upload protocol (single chunk).
 Returns the CID on stdout. Requires `AUTO_DRIVE_API_KEY`.
 
 - `--json` — force MIME type to `application/json`
@@ -82,7 +79,7 @@ Returns the CID on stdout. Requires `AUTO_DRIVE_API_KEY`.
 ### Download a File
 
 ```bash
-scripts/autodrive-download.sh <cid> [output_path]
+scripts/automemory-download.sh <cid> [output_path]
 ```
 
 Downloads a file by CID. Uses the authenticated API if `AUTO_DRIVE_API_KEY` is set (decompresses server-side), otherwise uses the public gateway (files returned as stored). If `output_path` is omitted, outputs to stdout.
@@ -90,7 +87,7 @@ Downloads a file by CID. Uses the authenticated API if `AUTO_DRIVE_API_KEY` is s
 ### Save a Memory Entry
 
 ```bash
-scripts/autodrive-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]
+scripts/automemory-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]
 ```
 
 Creates a memory experience with the Autonomys Agents header/data structure:
@@ -115,7 +112,7 @@ Creates a memory experience with the Autonomys Agents header/data structure:
 - `--agent-name` — set the agent name in the header (default: `openclaw-agent` or `$AGENT_NAME`)
 - `--state-file` — override the state file location
 
-Uploads to Auto-Drive and updates the state file with the new head CID. Also pins the latest CID to `MEMORY.md` if that file exists in the workspace.
+Uploads to Auto Drive and updates the state file with the new head CID. Also pins the latest CID to `MEMORY.md` if that file exists in the workspace.
 
 Returns structured JSON on stdout:
 
@@ -126,7 +123,7 @@ Returns structured JSON on stdout:
 ### Recall the Full Chain
 
 ```bash
-scripts/autodrive-recall-chain.sh [cid] [--limit N] [--output-dir DIR]
+scripts/automemory-recall-chain.sh [cid] [--limit N] [--output-dir DIR]
 ```
 
 If no CID is given, reads the latest CID from the state file.
@@ -154,33 +151,33 @@ If the agent's server dies, a new instance only needs the last CID to walk the e
 
 ## Usage Examples
 
-**User:** "Upload my report to Auto-Drive"
-→ Run `scripts/autodrive-upload.sh /path/to/report.pdf`
+**User:** "Upload my report to Autonomys"
+→ Run `scripts/automemory-upload.sh /path/to/report.pdf`
 → Report back the CID and gateway link
 
 **User:** "Upload with compression"
-→ Run `scripts/autodrive-upload.sh /path/to/data.json --json --compress`
+→ Run `scripts/automemory-upload.sh /path/to/data.json --json --compress`
 
 **User:** "Save a memory that we decided to use React for the frontend"
-→ Run `scripts/autodrive-save-memory.sh "Decision: using React for frontend. Reason: team familiarity and component reuse."`
+→ Run `scripts/automemory-save-memory.sh "Decision: using React for frontend. Reason: team familiarity and component reuse."`
 
 **User:** "Save a structured memory"
-→ Create a JSON file, then run `scripts/autodrive-save-memory.sh /tmp/milestone.json --agent-name my-agent`
+→ Create a JSON file, then run `scripts/automemory-save-memory.sh /tmp/milestone.json --agent-name my-agent`
 
 **User:** "Resurrect my memory chain"
-→ Run `scripts/autodrive-recall-chain.sh`
+→ Run `scripts/automemory-recall-chain.sh`
 → Display the full history from genesis to present
 
 **User:** "Download bafk...abc from Autonomys"
-→ Run `scripts/autodrive-download.sh bafk...abc ./downloaded_file`
+→ Run `scripts/automemory-download.sh bafk...abc ./downloaded_file`
 
 ## Important Notes
 
-- All data stored on Auto-Drive is **permanent and public** by default. Do not store secrets, private keys, or sensitive personal data.
+- All data stored via Auto Drive is **permanent and public** by default. Do not store secrets, private keys, or sensitive personal data.
 - The free API key has a **20 MB per month upload limit** on mainnet. Downloads are unlimited. Check remaining credits via `GET /accounts/@me` or run `scripts/verify-setup.sh`.
 - An API key is required for uploads, memory saves, and chain recall. General file downloads work without one via the public gateway, but compressed files will not be decompressed.
 - The memory state file tracks `lastCid`, `lastUploadTimestamp`, and `chainLength`. Back up the `lastCid` value — it's your resurrection key.
-- The `autodrive-save-memory.sh` script **automatically pins the latest CID to `MEMORY.md`** if the file exists in the workspace. It creates an `## Auto-Drive Chain` section and updates it on each save. You do not need to track the latest CID in MEMORY.md manually — the script handles this.
+- The `automemory-save-memory.sh` script **automatically pins the latest CID to `MEMORY.md`** if the file exists in the workspace. It creates an `## Auto-Memory Chain` section and updates it on each save. You do not need to track the latest CID in MEMORY.md manually — the script handles this.
 - Files are uploaded in a single chunk. The free tier's 20 MB/month limit is effectively a per-file ceiling — keep individual uploads well under that to preserve your monthly budget.
 - Gateway URL for any file: `https://gateway.autonomys.xyz/file/<CID>`
 - For true resurrection resilience, consider anchoring the latest CID on-chain via the Autonomys EVM — this makes recovery possible without keeping track of the head CID yourself. See [openclaw-memory-chain](https://github.com/autojeremy/openclaw-memory-chain) for an example contract implementation.

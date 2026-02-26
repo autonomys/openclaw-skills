@@ -9,7 +9,7 @@ The network has two layers:
 - **Consensus layer** — the base blockchain where tokens originate and where farmers earn AI3 through Proof-of-Archival-Storage. Supports balances, transfers, and remarks (arbitrary data written on-chain).
 - **Auto-EVM domain** — an Ethereum-compatible execution environment for smart contracts. Runs as a domain on top of the consensus layer. Tokens can be moved from consensus to EVM via cross-domain messaging (XDM).
 
-auto-respawn uses both layers: consensus for wallets, balances, transfers, and remarks; Auto-EVM for the MemoryChain contract (anchor/gethead).
+auto-respawn uses both layers: consensus for wallets, balances, transfers, and remarks; Auto-EVM for the MemoryChain contract (anchor/gethead). It works alongside the auto-memory skill, which handles permanent file storage and memory chains.
 
 ## Networks
 
@@ -117,7 +117,7 @@ Typical agent lifecycle:
 
 ## Key Links
 
-- Auto-Drive: https://ai3.storage
+- Auto Drive: https://ai3.storage
 - SDK: https://github.com/autonomys/auto-sdk
 - MemoryChain contract: https://github.com/autojeremy/openclaw-memory-chain
 - Faucet (testnet tAI3): https://autonomysfaucet.xyz/
