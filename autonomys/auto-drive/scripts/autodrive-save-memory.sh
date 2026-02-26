@@ -152,9 +152,13 @@ if [[ -f "$MEMORY_FILE" ]]; then
       SEDTMP=$(mktemp "${MEMORY_FILE}.XXXXXX")
       sed "s|^- \*\*Latest CID:\*\*.*|- **Latest CID:** \`$CID\` (chain length: $NEW_LENGTH, updated: $TIMESTAMP)|" "$MEMORY_FILE" > "$SEDTMP" && mv "$SEDTMP" "$MEMORY_FILE"
     else
+      # Backticks below are literal Markdown, not shell expansion
+      # shellcheck disable=SC2016
       printf '- **Latest CID:** `%s` (chain length: %d, updated: %s)\n' "$CID" "$NEW_LENGTH" "$TIMESTAMP" >> "$MEMORY_FILE"
     fi
   else
+    # Backticks below are literal Markdown, not shell expansion
+    # shellcheck disable=SC2016
     printf '\n## Auto-Drive Chain\n- **Latest CID:** `%s` (chain length: %d, updated: %s)\n' "$CID" "$NEW_LENGTH" "$TIMESTAMP" >> "$MEMORY_FILE"
   fi
 fi

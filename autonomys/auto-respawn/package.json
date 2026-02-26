@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
     "@autonomys/auto-consensus": "^1.6.9",
     "@autonomys/auto-utils": "^1.6.9",

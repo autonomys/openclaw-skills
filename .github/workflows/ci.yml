@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck:
+    name: TypeScript type check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: autonomys/auto-respawn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npx tsc --noEmit
+
+  shellcheck:
+    name: Shell script lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck autonomys/auto-drive/scripts/*.sh
