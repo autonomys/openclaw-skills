@@ -1,4 +1,4 @@
-import { activate, disconnect, getNetworkDetails } from '@autonomys/auto-utils'
+import { activate, disconnect } from '@autonomys/auto-utils'
 import type { ApiPromise } from '@polkadot/api'
 import type { ethers } from 'ethers'
 

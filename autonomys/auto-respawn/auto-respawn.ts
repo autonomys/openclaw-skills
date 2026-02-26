@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { connectApi, disconnectApi, disconnectEvmProvider, resolveNetwork, isMainnet, type NetworkId } from './lib/network.js'
+import { connectApi, disconnectApi, disconnectEvmProvider, resolveNetwork, isMainnet } from './lib/network.js'
 import { createWallet, importWallet, listWallets, loadWallet, getWalletInfo, loadEvmAddress, loadEvmPrivateKey } from './lib/wallet.js'
 import { queryBalance } from './lib/balance.js'
 import { queryEvmBalance } from './lib/evm-balance.js'

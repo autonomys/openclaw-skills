@@ -39,6 +39,7 @@ export async function anchorCid(
       throw new Error(
         `Insufficient EVM balance to anchor. ` +
           `Run: fund-evm --from <wallet> --amount 1 --network ${network}`,
+        { cause: err },
       )
     }
     throw err
@@ -103,6 +104,7 @@ export async function getHeadCid(
       throw new Error(
         `MemoryChain contract not available on network "${network}". ` +
           'The contract may not be deployed at the configured address.',
+        { cause: err },
       )
     }
     throw err
