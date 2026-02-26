@@ -11,37 +11,7 @@ import { anchorCid, getHeadCid } from './lib/memory-chain.js'
 import { fundEvm, withdrawToConsensus } from './lib/xdm.js'
 import { transferEvmTokens } from './lib/evm-transfer.js'
 import { normalizeEvmAddress, isConsensusAddress, isEvmAddress } from './lib/address.js'
-
-const COMMANDS_WITH_SUBCOMMANDS = new Set(['wallet'])
-
-function parseArgs(argv: string[]): { command: string; subcommand?: string; flags: Record<string, string>; positional: string[] } {
-  const args = argv.slice(2)
-  const command = args[0] || ''
-  const hasSubcommand = COMMANDS_WITH_SUBCOMMANDS.has(command)
-  const subcommand = hasSubcommand && args[1] && !args[1].startsWith('--') ? args[1] : undefined
-  const flags: Record<string, string> = {}
-  const positional: string[] = []
-
-  let i = subcommand ? 2 : 1
-  while (i < args.length) {
-    if (args[i].startsWith('--')) {
-      const key = args[i].slice(2)
-      const next = args[i + 1]
-      if (next && !next.startsWith('--')) {
-        flags[key] = next
-        i += 2
-      } else {
-        flags[key] = 'true'
-        i++
-      }
-    } else {
-      positional.push(args[i])
-      i++
-    }
-  }
-
-  return { command, subcommand, flags, positional }
-}
+import { parseArgs, validateAmount as validateAmountOrThrow } from './lib/cli.js'
 
 function output(data: unknown): void {
   console.log(JSON.stringify(data, null, 2))
@@ -53,17 +23,14 @@ function error(message: string, code = 1): never {
 }
 
 /**
- * Validate that an amount string is a positive number.
- * Catches bad input early with a clear message instead of letting
- * ethers.parseEther or ai3ToShannons throw a cryptic error.
+ * Validate an amount, exiting on failure.
+ * Wraps the throwing validateAmount from lib/cli.ts.
  */
 function validateAmount(amount: string, minimum?: number): void {
-  const n = Number(amount)
-  if (!Number.isFinite(n) || n <= 0) {
-    error(`Invalid amount: "${amount}". Must be a positive number (e.g. "1.5").`)
-  }
-  if (minimum != null && n < minimum) {
-    error(`Amount ${amount} is below the minimum of ${minimum}. Cross-domain transfers require at least ${minimum} AI3/tAI3.`)
+  try {
+    validateAmountOrThrow(amount, minimum)
+  } catch (err) {
+    error(err instanceof Error ? err.message : String(err))
   }
 }
 

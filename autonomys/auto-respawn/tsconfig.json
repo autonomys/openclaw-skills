@@ -10,6 +10,6 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["auto-respawn.ts", "lib/**/*.ts"],
+  "include": ["auto-respawn.ts", "lib/**/*.ts", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

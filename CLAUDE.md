@@ -45,6 +45,7 @@ All commands run from `autonomys/auto-respawn/`:
 npm install            # Install dependencies (no lockfile — use install, not ci)
 npm run typecheck      # tsc --noEmit
 npm run lint           # eslint .
+npm test               # vitest run (unit tests)
 npx tsx auto-respawn.ts <command>  # Run the CLI
 ```
 
@@ -62,7 +63,7 @@ shellcheck -x -S warning autonomys/auto-memory/scripts/<script>.sh
 
 GitHub Actions runs on PRs and pushes to `main` (`.github/workflows/ci.yml`):
 
-- **TypeScript type check & lint** — `tsc --noEmit` then `eslint .` (Node 22)
+- **TypeScript type check, lint & test** — `tsc --noEmit`, `eslint .`, then `vitest run` (Node 22)
 - **Shell script lint** — shellcheck on all scripts except `_lib.sh`
 
 ## Code conventions
