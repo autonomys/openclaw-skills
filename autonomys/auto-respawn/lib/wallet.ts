@@ -1,6 +1,6 @@
 import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, resolve, basename } from 'node:path'
 import { createInterface } from 'node:readline'
 import { ethers } from 'ethers'
 import {
@@ -68,7 +68,11 @@ async function ensureWalletsDir(): Promise<void> {
 }
 
 function keyfilePath(name: string): string {
-  return join(WALLETS_DIR, `${name}.json`)
+  const filepath = resolve(WALLETS_DIR, `${basename(name)}.json`)
+  if (!filepath.startsWith(WALLETS_DIR)) {
+    throw new Error(`Invalid wallet name: "${name}". Wallet names must not contain path separators.`)
+  }
+  return filepath
 }
 
 async function readWalletFile(filepath: string): Promise<WalletFile> {

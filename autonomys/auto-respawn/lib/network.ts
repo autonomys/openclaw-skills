@@ -18,6 +18,11 @@ export function resolveNetwork(flag?: string): NetworkId {
   }
   const env = process.env.AUTO_RESPAWN_NETWORK
   if (env === 'mainnet' || env === 'chronos') return env
+  if (env) {
+    throw new Error(
+      `Unknown AUTO_RESPAWN_NETWORK: "${env}". Must be "chronos" or "mainnet".`,
+    )
+  }
   return 'chronos'
 }
 

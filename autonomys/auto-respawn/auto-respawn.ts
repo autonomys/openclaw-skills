@@ -328,11 +328,16 @@ async function handleBalances(flags: Record<string, string>, positional: string[
   const network = resolveNetwork(flags.network)
   const info = await getWalletInfo(target)
 
-  // Query both balances concurrently
-  const api = await connectApi(network)
-  const provider = connectEvmProvider(network)
+  // Query both balances concurrently.
+  // Both connections are created inside the try block so the finally
+  // block can clean them up even if the second connection fails.
+  let api: Awaited<ReturnType<typeof connectApi>> | undefined
+  let provider: ReturnType<typeof connectEvmProvider> | undefined
 
   try {
+    api = await connectApi(network)
+    provider = connectEvmProvider(network)
+
     const [consensus, evm] = await Promise.all([
       queryBalance(api, info.address, network),
       queryEvmBalance(provider, info.evmAddress, network),
@@ -354,8 +359,8 @@ async function handleBalances(flags: Record<string, string>, positional: string[
       symbol: consensus.symbol,
     })
   } finally {
-    await disconnectApi(api)
-    await disconnectEvmProvider(provider)
+    if (api) await disconnectApi(api)
+    if (provider) await disconnectEvmProvider(provider)
   }
 }
 
