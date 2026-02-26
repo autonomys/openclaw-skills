@@ -9,7 +9,7 @@ metadata:
     emoji: "🔄"
     requires:
       anyBins: ["node"]
-      env: []
+      env: ["AUTO_RESPAWN_PASSPHRASE"]
     install:
       - id: deps
         kind: node
