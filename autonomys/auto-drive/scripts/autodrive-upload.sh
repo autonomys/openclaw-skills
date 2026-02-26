@@ -6,7 +6,11 @@
 
 set -euo pipefail
 
-API_BASE="https://mainnet.auto-drive.autonomys.xyz/api"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./_lib.sh
+source "$SCRIPT_DIR/_lib.sh"
+ad_warn_git_bash
+ad_require_tools curl jq
 
 FILE_PATH="${1:?Usage: autodrive-upload.sh <file_path> [--json] [--compress]}"
 IS_JSON=false
@@ -34,7 +38,18 @@ FILENAME=$(basename "$FILE_PATH")
 if $IS_JSON; then
   MIME="application/json"
 else
-  MIME=$(file --mime-type -b "$FILE_PATH" 2>/dev/null || echo "application/octet-stream")
+  if command -v file &>/dev/null; then
+    MIME=$(file --mime-type -b "$FILE_PATH" 2>/dev/null || echo "application/octet-stream")
+  else
+    case "${FILE_PATH##*.}" in
+      json)     MIME="application/json" ;;
+      txt)      MIME="text/plain" ;;
+      pdf)      MIME="application/pdf" ;;
+      png)      MIME="image/png" ;;
+      jpg|jpeg) MIME="image/jpeg" ;;
+      *)        MIME="application/octet-stream" ;;
+    esac
+  fi
 fi
 
 AUTH_HEADERS=(-H "Authorization: Bearer $AUTO_DRIVE_API_KEY" -H "X-Auth-Provider: apikey")
@@ -49,7 +64,7 @@ else
     '{filename: $fn, mimeType: $mt, uploadOptions: {}}')
 fi
 
-RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$API_BASE/uploads/file" \
+RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$AD_API_BASE/uploads/file" \
   "${AUTH_HEADERS[@]}" \
   -H "Content-Type: application/json" \
   -d "$UPLOAD_BODY")
@@ -71,7 +86,7 @@ fi
 
 # Step 2: Upload chunk
 echo "Uploading file data..." >&2
-RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$API_BASE/uploads/file/$UPLOAD_ID/chunk" \
+RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$AD_API_BASE/uploads/file/$UPLOAD_ID/chunk" \
   "${AUTH_HEADERS[@]}" \
   -F "file=@$FILE_PATH" \
   -F "index=0")
@@ -85,7 +100,7 @@ fi
 
 # Step 3: Complete upload → get CID
 echo "Completing upload..." >&2
-RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$API_BASE/uploads/$UPLOAD_ID/complete" \
+RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$AD_API_BASE/uploads/$UPLOAD_ID/complete" \
   "${AUTH_HEADERS[@]}")
 HTTP_CODE=$(echo "$RESPONSE" | tail -1)
 BODY=$(echo "$RESPONSE" | sed '$d')
@@ -104,9 +119,7 @@ if [[ -z "$CID" || "$CID" == "null" ]]; then
 fi
 
 # Validate CID format to prevent command injection and chain corruption
-# Autonomys CIDs are base32-encoded and must start with "baf" followed by valid base32 chars
-# This matches the validation pattern used in other scripts (download, save-memory, recall-chain)
-if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
+if ! ad_valid_cid "$CID"; then
   echo "Error: Invalid CID format returned: $CID" >&2
   exit 1
 fi

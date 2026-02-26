@@ -7,11 +7,17 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./_lib.sh
+source "$SCRIPT_DIR/_lib.sh"
+ad_warn_git_bash
+ad_require_tools curl
+
 CID="${1:?Usage: autodrive-download.sh <cid> [output_path]}"
 OUTPUT="${2:-}"
 
 # Validate CID format
-if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
+if ! ad_valid_cid "$CID"; then
   echo "Error: Invalid CID format: $CID" >&2
   exit 1
 fi
@@ -35,7 +41,6 @@ if [[ -n "$OUTPUT" ]]; then
 fi
 
 GATEWAY="https://gateway.autonomys.xyz"
-DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
 
 download_to_file() {
   local URL="$1" DEST="$2"
@@ -53,11 +58,11 @@ fi
 
 if [[ -z "$OUTPUT" ]]; then
   # Output to stdout — try download API first, fall back to gateway
-  curl -sS --fail "$DOWNLOAD_API/downloads/$CID" "${AUTH_ARGS[@]}" 2>/dev/null \
+  curl -sS --fail "$AD_DOWNLOAD_API/downloads/$CID" "${AUTH_ARGS[@]}" 2>/dev/null \
     || curl -sS --fail "$GATEWAY/file/$CID"
 else
   # Output to file — check HTTP codes for proper error reporting
-  HTTP_CODE=$(download_to_file "$DOWNLOAD_API/downloads/$CID" "$OUTPUT" "${AUTH_ARGS[@]}")
+  HTTP_CODE=$(download_to_file "$AD_DOWNLOAD_API/downloads/$CID" "$OUTPUT" "${AUTH_ARGS[@]}")
   if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]]; then
     echo "Saved to: $OUTPUT" >&2
   else
@@ -68,6 +73,6 @@ else
       rm -f "$OUTPUT"
       exit 1
     fi
-    echo "Saved to: $OUTPUT (via gateway)" >&2
+    echo "Saved to: $OUTPUT (via public gateway — file may be in compressed form)" >&2
   fi
 fi

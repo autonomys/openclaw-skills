@@ -7,6 +7,8 @@ set -euo pipefail
 # shellcheck source=_lib.sh
 source "$(dirname "$0")/_lib.sh"
 
+ad_warn_git_bash
+
 echo ""
 echo "=== Auto-Drive Setup Verification ==="
 echo ""

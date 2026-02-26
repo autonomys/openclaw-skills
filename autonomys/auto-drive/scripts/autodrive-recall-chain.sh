@@ -6,7 +6,16 @@
 
 set -euo pipefail
 
-DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./_lib.sh
+source "$SCRIPT_DIR/_lib.sh"
+ad_warn_git_bash
+ad_require_tools curl jq
+if ! command -v python3 &>/dev/null && ! command -v perl &>/dev/null; then
+  echo "Warning: Neither python3 nor perl found — gateway decompression fallback will not work." >&2
+  ad_install_hint python3
+fi
+
 
 # First arg can be a CID or a flag — if no CID given, try state file
 CID=""
@@ -66,7 +75,7 @@ if [[ -z "$CID" ]]; then
 fi
 
 # Validate CID format
-if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
+if ! ad_valid_cid "$CID"; then
   echo "Error: Invalid CID format: $CID" >&2
   exit 1
 fi
@@ -124,7 +133,7 @@ while [[ -n "$CID" && "$CID" != "null" && $COUNT -lt $LIMIT ]]; do
 
   # Download via authenticated API (handles decompression server-side).
   EXPERIENCE=$(curl -sS --fail \
-    "$DOWNLOAD_API/downloads/$CID" \
+    "$AD_DOWNLOAD_API/downloads/$CID" \
     -H "Authorization: Bearer $AUTO_DRIVE_API_KEY" \
     -H "X-Auth-Provider: apikey" 2>/dev/null \
     || true)
@@ -180,7 +189,7 @@ while [[ -n "$CID" && "$CID" != "null" && $COUNT -lt $LIMIT ]]; do
   PREV=$(echo "$EXPERIENCE" | jq -r '.header.previousCid // .previousCid // empty' 2>/dev/null || true)
   CID="${PREV:-}"
   # Validate next CID in chain
-  if [[ -n "$CID" && "$CID" != "null" && ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
+  if [[ -n "$CID" && "$CID" != "null" ]] && ! ad_valid_cid "$CID"; then
     echo "Warning: Invalid CID format in chain: $CID — stopping traversal" >&2
     break
   fi

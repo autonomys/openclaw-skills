@@ -5,6 +5,7 @@
 # -- Constants ----------------------------------------------------------------
 
 AD_API_BASE="https://mainnet.auto-drive.autonomys.xyz/api"
+AD_DOWNLOAD_API="https://public.auto-drive.autonomys.xyz/api"
 AD_OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw}"
 AD_ENV_FILE="$AD_OPENCLAW_DIR/.env"
 AD_CONFIG_FILE="$AD_OPENCLAW_DIR/openclaw.json"
@@ -13,6 +14,53 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
+
+# -- Platform / dependency helpers -------------------------------------------
+
+# Print a platform-appropriate install hint for one or more packages.
+# Usage: ad_install_hint <pkg> [pkg ...]
+ad_install_hint() {
+  case "$(uname -s 2>/dev/null)" in
+    Linux*)               echo "  Install: sudo apt install $*" >&2 ;;
+    Darwin*)              echo "  Install: brew install $*" >&2 ;;
+    MINGW*|MSYS*|CYGWIN*) echo "  Install: winget install $* OR choco install $*" >&2 ;;
+    *)                    echo "  Install: $*" >&2 ;;
+  esac
+}
+
+# Warn Git Bash / Windows users about potential compatibility issues.
+ad_warn_git_bash() {
+  case "$(uname -s 2>/dev/null)" in
+    MINGW*|MSYS*|CYGWIN*)
+      echo "Note: Running in Git Bash. For full compatibility, consider using WSL." >&2
+      echo "WSL setup: https://learn.microsoft.com/en-us/windows/wsl/install" >&2
+      ;;
+  esac
+}
+
+# Check that all listed commands exist; exit 1 with install hint if any are missing.
+# Usage: ad_require_tools curl jq
+ad_require_tools() {
+  local _missing=()
+  local _cmd
+  for _cmd in "$@"; do
+    command -v "$_cmd" &>/dev/null || _missing+=("$_cmd")
+  done
+  if [[ ${#_missing[@]} -gt 0 ]]; then
+    echo -e "${RED}Error: Missing required tools: ${_missing[*]}${NC}" >&2
+    ad_install_hint "${_missing[@]}"
+    exit 1
+  fi
+}
+
+# -- Validation helpers ------------------------------------------------------
+
+# Autonomys CID format: base32-encoded, starting with "baf".
+AD_CID_RE='^baf[a-z2-7]{50,100}$'
+
+# Return 0 if the argument looks like a valid Autonomys CID, 1 otherwise.
+# Usage: ad_valid_cid "$CID"
+ad_valid_cid() { [[ "${1:-}" =~ $AD_CID_RE ]]; }
 
 # -- Functions ----------------------------------------------------------------
 

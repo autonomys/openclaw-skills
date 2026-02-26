@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Save a memory experience to Auto-Drive as part of the linked list chain
 # Usage: autodrive-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]
-# Env: AUTO_DRIVE_API_KEY (required)
+# Env: AUTO_DRIVE_API_KEY (required), AGENT_NAME (optional, default: openclaw-agent),
+#      OPENCLAW_WORKSPACE (optional, default: $HOME/.openclaw/workspace)
 # Output: JSON with cid, previousCid, chainLength (stdout)
 #
 # If the first argument is a file path, its contents are used as the data payload.
@@ -10,6 +11,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./_lib.sh
+source "$SCRIPT_DIR/_lib.sh"
+ad_warn_git_bash
+ad_require_tools curl jq
 INPUT="${1:?Usage: autodrive-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]}"
 AGENT_NAME="${AGENT_NAME:-openclaw-agent}"
 STATE_FILE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace}/memory/autodrive-state.json"
@@ -85,6 +90,12 @@ if [[ -f "$STATE_FILE" ]]; then
   PREVIOUS_CID=$(jq -r '.lastCid // empty' "$STATE_FILE" 2>/dev/null || echo "null")
   CHAIN_LENGTH=$(jq -r '.chainLength // 0' "$STATE_FILE" 2>/dev/null || echo "0")
   [[ -z "$PREVIOUS_CID" ]] && PREVIOUS_CID="null"
+  # Reject a corrupted/tampered state file CID rather than propagating it into the chain
+  if [[ "$PREVIOUS_CID" != "null" ]] && ! ad_valid_cid "$PREVIOUS_CID"; then
+    echo "Warning: State file contains invalid CID '$PREVIOUS_CID' — starting new chain" >&2
+    PREVIOUS_CID="null"
+    CHAIN_LENGTH=0
+  fi
 fi
 
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
@@ -106,7 +117,7 @@ EXPERIENCE=$(jq -n \
   }')
 
 # Write to temp file and upload via the upload script
-TMPFILE=$(mktemp /tmp/autodrive-memory-XXXXXX.json)
+TMPFILE=$(mktemp)
 trap 'rm -f "$TMPFILE"' EXIT
 echo "$EXPERIENCE" > "$TMPFILE"
 CID=$("$SCRIPT_DIR/autodrive-upload.sh" "$TMPFILE" --json --compress)
@@ -116,8 +127,8 @@ if [[ -z "$CID" ]]; then
   exit 1
 fi
 
-# Validate CID format (Autonomys CIDs are base32-encoded, starting with "bafy" or "bafk")
-if [[ ! "$CID" =~ ^baf[a-z2-7]+$ ]]; then
+# Validate CID format
+if ! ad_valid_cid "$CID"; then
   echo "Error: Invalid CID format returned: $CID" >&2
   exit 1
 fi
@@ -130,6 +141,7 @@ jq -n \
   --arg ts "$TIMESTAMP" \
   --argjson len "$NEW_LENGTH" \
   '{lastCid: $cid, lastUploadTimestamp: $ts, chainLength: $len}' > "$STATE_FILE"
+chmod 600 "$STATE_FILE"
 
 # Pin latest CID to MEMORY.md for session continuity (if it exists)
 MEMORY_FILE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace}/MEMORY.md"
