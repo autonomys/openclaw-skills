@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Save a memory experience to Auto-Drive as part of the linked list chain
-# Usage: autodrive-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]
+# Save a memory experience to Auto Drive as part of the linked list chain
+# Usage: automemory-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]
 # Env: AUTO_DRIVE_API_KEY (required), AGENT_NAME (optional, default: openclaw-agent),
 #      OPENCLAW_WORKSPACE (optional, default: $HOME/.openclaw/workspace)
 # Output: JSON with cid, previousCid, chainLength (stdout)
@@ -13,11 +13,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=./_lib.sh
 source "$SCRIPT_DIR/_lib.sh"
-ad_warn_git_bash
-ad_require_tools curl jq
-INPUT="${1:?Usage: autodrive-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]}"
+am_warn_git_bash
+am_require_tools curl jq
+INPUT="${1:?Usage: automemory-save-memory.sh <data_file_or_string> [--agent-name NAME] [--state-file PATH]}"
 AGENT_NAME="${AGENT_NAME:-openclaw-agent}"
-STATE_FILE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace}/memory/autodrive-state.json"
+STATE_FILE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace}/memory/automemory-state.json"
 STATE_FILE_EXPLICIT=false
 
 shift
@@ -91,7 +91,7 @@ if [[ -f "$STATE_FILE" ]]; then
   CHAIN_LENGTH=$(jq -r '.chainLength // 0' "$STATE_FILE" 2>/dev/null || echo "0")
   [[ -z "$PREVIOUS_CID" ]] && PREVIOUS_CID="null"
   # Reject a corrupted/tampered state file CID rather than propagating it into the chain
-  if [[ "$PREVIOUS_CID" != "null" ]] && ! ad_valid_cid "$PREVIOUS_CID"; then
+  if [[ "$PREVIOUS_CID" != "null" ]] && ! am_valid_cid "$PREVIOUS_CID"; then
     echo "Warning: State file contains invalid CID '$PREVIOUS_CID' — starting new chain" >&2
     PREVIOUS_CID="null"
     CHAIN_LENGTH=0
@@ -120,7 +120,7 @@ EXPERIENCE=$(jq -n \
 TMPFILE=$(mktemp)
 trap 'rm -f "$TMPFILE"' EXIT
 echo "$EXPERIENCE" > "$TMPFILE"
-CID=$("$SCRIPT_DIR/autodrive-upload.sh" "$TMPFILE" --json --compress)
+CID=$("$SCRIPT_DIR/automemory-upload.sh" "$TMPFILE" --json --compress)
 
 if [[ -z "$CID" ]]; then
   echo "Error: Upload failed — no CID returned" >&2
@@ -128,7 +128,7 @@ if [[ -z "$CID" ]]; then
 fi
 
 # Validate CID format
-if ! ad_valid_cid "$CID"; then
+if ! am_valid_cid "$CID"; then
   echo "Error: Invalid CID format returned: $CID" >&2
   exit 1
 fi
@@ -146,7 +146,7 @@ chmod 600 "$STATE_FILE"
 # Pin latest CID to MEMORY.md for session continuity (if it exists)
 MEMORY_FILE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace}/MEMORY.md"
 if [[ -f "$MEMORY_FILE" ]]; then
-  if grep -q "^## Auto-Drive Chain" "$MEMORY_FILE"; then
+  if grep -q "^## Auto-Memory Chain" "$MEMORY_FILE"; then
     if grep -q "^\- \*\*Latest CID:\*\*" "$MEMORY_FILE"; then
       # Portable sed -i (works on both macOS and Linux)
       SEDTMP=$(mktemp "${MEMORY_FILE}.XXXXXX")
@@ -159,7 +159,7 @@ if [[ -f "$MEMORY_FILE" ]]; then
   else
     # Backticks below are literal Markdown, not shell expansion
     # shellcheck disable=SC2016
-    printf '\n## Auto-Drive Chain\n- **Latest CID:** `%s` (chain length: %d, updated: %s)\n' "$CID" "$NEW_LENGTH" "$TIMESTAMP" >> "$MEMORY_FILE"
+    printf '\n## Auto-Memory Chain\n- **Latest CID:** `%s` (chain length: %d, updated: %s)\n' "$CID" "$NEW_LENGTH" "$TIMESTAMP" >> "$MEMORY_FILE"
   fi
 fi
 
