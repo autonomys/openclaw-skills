@@ -9,11 +9,21 @@ metadata:
       bins: ["curl", "jq", "file"]
       env: ["AUTO_DRIVE_API_KEY"]
     install:
+      - id: curl-brew
+        kind: brew
+        formula: curl
+        bins: ["curl"]
+        label: "Install curl (brew)"
       - id: jq-brew
         kind: brew
         formula: jq
         bins: ["jq"]
         label: "Install jq (brew)"
+      - id: file-brew
+        kind: brew
+        formula: file-formula
+        bins: ["file"]
+        label: "Install file (brew)"
 ---
 
 # Auto-Memory Skill
