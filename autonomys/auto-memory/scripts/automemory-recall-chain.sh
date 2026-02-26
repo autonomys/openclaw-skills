@@ -206,13 +206,23 @@ done
 if [[ "$RESTORE_STATE" == true && $COUNT -gt 0 ]]; then
   RS_STATE_FILE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace}/memory/automemory-state.json"
   mkdir -p "$(dirname "$RS_STATE_FILE")"
+  # Detect whether traversal was truncated by --limit (chain may be longer than $COUNT)
+  TRUNCATED=false
+  if [[ $COUNT -ge $LIMIT && -n "$CID" && "$CID" != "null" ]]; then
+    TRUNCATED=true
+  fi
   jq -n \
     --arg cid "$HEAD_CID" \
     --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")" \
     --argjson len "$COUNT" \
-    '{lastCid: $cid, lastUploadTimestamp: $ts, chainLength: $len}' > "$RS_STATE_FILE"
+    --argjson truncated "$TRUNCATED" \
+    '{lastCid: $cid, lastUploadTimestamp: $ts, chainLength: $len, chainTruncated: $truncated}' > "$RS_STATE_FILE"
   chmod 600 "$RS_STATE_FILE"
-  echo "State restored: lastCid=$HEAD_CID, chainLength=$COUNT" >&2
+  if [[ "$TRUNCATED" == true ]]; then
+    echo "State restored: lastCid=$HEAD_CID, chainLength>=$COUNT (truncated by --limit $LIMIT)" >&2
+  else
+    echo "State restored: lastCid=$HEAD_CID, chainLength=$COUNT" >&2
+  fi
 fi
 
 echo "" >&2
