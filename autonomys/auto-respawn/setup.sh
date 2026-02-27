@@ -47,10 +47,10 @@ PASSPHRASE_FILE="${RESPAWN_DIR}/.passphrase"
 if [[ -z "${AUTO_RESPAWN_PASSPHRASE:-}" ]] && [[ ! -f "$PASSPHRASE_FILE" ]]; then
   mkdir -p "$RESPAWN_DIR"
   chmod 700 "$RESPAWN_DIR"
-  (umask 077 && openssl rand -base64 32 > "$PASSPHRASE_FILE")
+  (umask 077 && node -e "console.log(require('crypto').randomBytes(32).toString('base64'))" > "$PASSPHRASE_FILE")
   if [[ ! -s "$PASSPHRASE_FILE" ]]; then
     rm -f "$PASSPHRASE_FILE"
-    echo "Error: Failed to generate passphrase (is openssl installed?)" >&2
+    echo "Error: Failed to generate passphrase" >&2
     exit 1
   fi
   echo "✓ Generated passphrase at $PASSPHRASE_FILE"
