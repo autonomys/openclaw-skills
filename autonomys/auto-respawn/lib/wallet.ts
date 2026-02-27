@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises'
+import { readdir, readFile, writeFile, mkdir, chmod } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve, basename } from 'node:path'
 import { createInterface } from 'node:readline'
@@ -13,19 +13,19 @@ import {
 import type { KeyringPair, KeyringPair$Json } from '@polkadot/keyring/types'
 import { deriveEvmKey } from './evm.js'
 
-const WALLETS_DIR = join(
+const RESPAWN_DIR = join(
   process.env.HOME || process.env.USERPROFILE || '~',
   '.openclaw',
   'auto-respawn',
-  'wallets',
 )
 
-const PASSPHRASE_FILE_DEFAULT = join(
-  process.env.HOME || process.env.USERPROFILE || '~',
-  '.openclaw',
-  'auto-respawn',
-  '.passphrase',
-)
+const WALLETS_DIR = join(RESPAWN_DIR, 'wallets')
+
+const PASSPHRASE_FILE_DEFAULT = join(RESPAWN_DIR, '.passphrase')
+
+function mnemonicDeadDropPath(name: string): string {
+  return join(RESPAWN_DIR, `.mnemonic-${basename(name)}`)
+}
 
 // --- Wallet file format ---
 
@@ -65,6 +65,41 @@ async function ensureWalletsDir(): Promise<void> {
   if (!existsSync(WALLETS_DIR)) {
     await mkdir(WALLETS_DIR, { recursive: true, mode: 0o700 })
   }
+}
+
+/**
+ * Throw if an unread dead-drop file already exists for this wallet name.
+ *
+ * Must be called **before** createWallet so that no wallet keyfile is
+ * persisted when the mnemonic cannot be safely written.
+ */
+export function ensureNoStaleMnemonic(name: string): void {
+  const deadDrop = mnemonicDeadDropPath(name)
+  if (existsSync(deadDrop)) {
+    throw new Error(
+      `A recovery phrase for wallet "${name}" has not been retrieved. ` +
+      `Back it up before creating another wallet: chmod 600 ${deadDrop} && cat ${deadDrop} — then rm ${deadDrop}`,
+    )
+  }
+}
+
+/**
+ * Write the mnemonic to a per-wallet dead-drop file (chmod 000).
+ *
+ * The human operator must `chmod 600` the file before reading, then delete it.
+ * The agent should never access this path — it exists solely as a secure
+ * hand-off from the creation process to the human.
+ *
+ * Returns the absolute path of the dead-drop file.
+ */
+export async function writeMnemonicDeadDrop(name: string, mnemonic: string): Promise<string> {
+  const deadDrop = mnemonicDeadDropPath(name)
+  await mkdir(RESPAWN_DIR, { recursive: true, mode: 0o700 })
+  // Write with owner-only permissions first, then lock completely.
+  // Two-step avoids a window where the file is world-readable.
+  await writeFile(deadDrop, mnemonic + '\n', { mode: 0o600 })
+  await chmod(deadDrop, 0o000)
+  return deadDrop
 }
 
 function keyfilePath(name: string): string {
