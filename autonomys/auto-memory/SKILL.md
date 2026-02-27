@@ -213,6 +213,18 @@ What you store in the chain is up to you — lightweight notes, full file snapsh
 **User:** "Download bafk...abc from Autonomys"
 → Run `scripts/automemory-download.sh bafk...abc ./downloaded_file`
 
+## Integration with Auto-Respawn
+
+If the **auto-respawn** skill is also installed, anchor the new head CID on-chain after every memory save. This ensures the on-chain pointer always reflects the latest memory state, enabling full resurrection from just an EVM address.
+
+After each `automemory-save-memory.sh` call, run:
+
+```bash
+npx tsx auto-respawn.ts anchor --from <wallet-name> --cid <new-cid>
+```
+
+This completes the resurrection loop: permanent storage (auto-memory) + on-chain discovery (auto-respawn). Without anchoring, a new instance would need the head CID from some other source to walk the chain.
+
 ## Important Notes
 
 - All data stored via Auto Drive is **permanent and public** by default. Do not store secrets, private keys, or sensitive personal data.
