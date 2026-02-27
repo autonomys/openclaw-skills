@@ -38,3 +38,48 @@ auto-respawn **requires auto-memory** (or equivalent) to have something worth an
 ### auto-drive (deprecated)
 
 The original name for the auto-memory skill. Preserved for backward compatibility but no longer maintained. Use `autonomys/auto-memory/` instead.
+
+## CI
+
+GitHub Actions runs on PRs and pushes to `main` (`.github/workflows/ci.yml`):
+
+- **TypeScript** — type check (`tsc --noEmit`), lint (`eslint .`), and test (`vitest run`) for auto-respawn (Node 22)
+- **Shell** — `shellcheck -x -S warning` on all auto-memory scripts (except `_lib.sh`, which is validated in context via `-x`)
+
+## Publishing
+
+Skills are published to [ClawHub](https://docs.openclaw.ai) via `.github/workflows/publish.yml`. The workflow triggers on tags matching `*/v*`.
+
+### How to publish a release
+
+1. **Tag the commit** using the pattern `<skill>/v<semver>`:
+
+   ```bash
+   git tag auto-memory/v0.2.0
+   git tag auto-respawn/v0.1.0-beta.3
+   ```
+
+2. **Push the tag:**
+
+   ```bash
+   git push origin auto-memory/v0.2.0
+   ```
+
+3. The workflow automatically:
+   - Parses the skill name and version from the tag (strips the `v` prefix — ClawHub expects bare semver like `0.2.0`, not `v0.2.0`)
+   - Resolves the skill directory (`autonomys/auto-memory` or `autonomys/auto-respawn`)
+   - Validates that `SKILL.md` exists in the directory
+   - Authenticates with ClawHub using the `CLAWHUB_TOKEN` repository secret
+   - Publishes with `npx clawhub publish` including `--tags beta`
+
+### Supported skills
+
+| Tag prefix | Directory | ClawHub slug | Display name |
+|---|---|---|---|
+| `auto-memory/v*` | `autonomys/auto-memory` | `auto-memory` | Auto Memory |
+| `auto-respawn/v*` | `autonomys/auto-respawn` | `auto-respawn` | Auto Respawn |
+
+### Requirements
+
+- A `CLAWHUB_TOKEN` repository secret must be configured in GitHub
+- The tagged commit must contain a valid `SKILL.md` in the skill's directory
