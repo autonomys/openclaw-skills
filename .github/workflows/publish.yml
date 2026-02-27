@@ -27,17 +27,19 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Publishing $SKILL $VERSION"
 
-      - name: Resolve skill directory and name
+      - name: Resolve skill directory, name, and discovery tags
         id: meta
         run: |
           case "${{ steps.tag.outputs.skill }}" in
             auto-memory)
               echo "dir=autonomys/auto-memory" >> "$GITHUB_OUTPUT"
               echo "name=Auto Memory" >> "$GITHUB_OUTPUT"
+              echo "tags=memory,persistence,decentralized,autonomys,long-term,openclaw" >> "$GITHUB_OUTPUT"
               ;;
             auto-respawn)
               echo "dir=autonomys/auto-respawn" >> "$GITHUB_OUTPUT"
               echo "name=Auto Respawn" >> "$GITHUB_OUTPUT"
+              echo "tags=identity,agent-memory,decentralized,autonomys,resurrection,persistence" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "Error: Unknown skill '${{ steps.tag.outputs.skill }}'" >&2
@@ -61,4 +63,4 @@ jobs:
             --slug "${{ steps.tag.outputs.skill }}" \
             --name "${{ steps.meta.outputs.name }}" \
             --version "${{ steps.tag.outputs.version }}" \
-            --tags beta
+            --tags "${{ steps.meta.outputs.tags }}"
