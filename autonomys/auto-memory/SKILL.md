@@ -148,13 +148,32 @@ This is the **resurrection** mechanism: a new agent instance only needs one CID 
 
 ## The Resurrection Concept
 
-Every memory saved gets a unique CID and points back to the previous one:
+Every memory saved gets a unique CID and points back to the previous one, forming a permanent chain on the Autonomys Network:
 
 ```
-Experience #3 (CID: bafk...xyz)
-  → header.previousCid: bafk...def (Experience #2)
-    → header.previousCid: bafk...abc (Experience #1)
-      → header.previousCid: null (genesis)
+┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
+│  Experience #1      │     │  Experience #2      │     │  Experience #3      │
+│  CID: bafk...abc    │◄────│  CID: bafk...def    │◄────│  CID: bafk...xyz    │
+│  previousCid: null  │     │  previousCid:       │     │  previousCid:       │
+│  (genesis)          │     │  bafk...abc         │     │  bafk...def         │
+└─────────────────────┘     └─────────────────────┘     └─────────────────────┘
+                                                                   ▲
+                                                                   │
+                                                               HEAD CID
+                                                           (resurrection key)
+```
+
+A new agent instance only needs the **head CID** to walk the entire chain back to genesis and rebuild its full history. With the **auto-respawn** skill, the head CID is anchored on-chain — making resurrection possible from just an address, on any machine, at any time:
+
+```
+┌──────────┐    save      ┌──────────────┐    anchor    ┌────────────────┐
+│  Agent   │─────────────►│  Auto-Memory │─────────────►│  Auto-Respawn  │
+│          │              │  (chain)     │   head CID   │  (on-chain)    │
+└──────────┘              └──────────────┘              └────────────────┘
+      ▲                                                          │
+      │                     recall chain                         │
+      └──────────────────────────────────────────────────────────┘
+                      gethead → CID → walk chain
 ```
 
 What you store in the chain is up to you — lightweight notes, full file snapshots, structured data, or anything in between. Because the chain is permanent and walkable, it also enables **resurrection**: if the agent loses all local state, a new instance can walk the chain from the last CID back to genesis and restore whatever was saved. When combined with the **auto-respawn** skill (which anchors the head CID on-chain), this becomes a full resurrection loop — no local state required at all.
