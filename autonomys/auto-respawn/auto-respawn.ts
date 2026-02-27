@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { connectApi, disconnectApi, disconnectEvmProvider, resolveNetwork, isMainnet } from './lib/network.js'
-import { createWallet, importWallet, listWallets, loadWallet, getWalletInfo, loadEvmAddress, loadEvmPrivateKey, writeMnemonicDeadDrop } from './lib/wallet.js'
+import { createWallet, importWallet, listWallets, loadWallet, getWalletInfo, loadEvmAddress, loadEvmPrivateKey, ensureNoStaleMnemonic, writeMnemonicDeadDrop } from './lib/wallet.js'
 import { queryBalance } from './lib/balance.js'
 import { queryEvmBalance } from './lib/evm-balance.js'
 import { transferTokens } from './lib/transfer.js'
@@ -38,10 +38,13 @@ async function handleWallet(subcommand: string | undefined, flags: Record<string
   switch (subcommand) {
     case 'create': {
       const name = flags.name || 'default'
+      // Fail early if a previous mnemonic hasn't been retrieved — before
+      // the wallet keyfile is written, so we don't orphan a wallet.
+      ensureNoStaleMnemonic(name)
       const result = await createWallet(name, flags.passphrase)
       // Write mnemonic to a dead-drop file (chmod 000) instead of stderr.
       // The agent never sees the phrase — only the file path appears in output.
-      const mnemonicPath = await writeMnemonicDeadDrop(result.mnemonic)
+      const mnemonicPath = await writeMnemonicDeadDrop(name, result.mnemonic)
       output({
         name: result.name,
         address: result.address,

@@ -23,7 +23,9 @@ const WALLETS_DIR = join(RESPAWN_DIR, 'wallets')
 
 const PASSPHRASE_FILE_DEFAULT = join(RESPAWN_DIR, '.passphrase')
 
-const MNEMONIC_DEAD_DROP = join(RESPAWN_DIR, '.last-mnemonic')
+function mnemonicDeadDropPath(name: string): string {
+  return join(RESPAWN_DIR, `.mnemonic-${basename(name)}`)
+}
 
 // --- Wallet file format ---
 
@@ -66,7 +68,23 @@ async function ensureWalletsDir(): Promise<void> {
 }
 
 /**
- * Write the mnemonic to a dead-drop file that no user can read (chmod 000).
+ * Throw if an unread dead-drop file already exists for this wallet name.
+ *
+ * Must be called **before** createWallet so that no wallet keyfile is
+ * persisted when the mnemonic cannot be safely written.
+ */
+export function ensureNoStaleMnemonic(name: string): void {
+  const deadDrop = mnemonicDeadDropPath(name)
+  if (existsSync(deadDrop)) {
+    throw new Error(
+      `A recovery phrase for wallet "${name}" has not been retrieved. ` +
+      `Back it up before creating another wallet: chmod 600 ${deadDrop} && cat ${deadDrop} — then rm ${deadDrop}`,
+    )
+  }
+}
+
+/**
+ * Write the mnemonic to a per-wallet dead-drop file (chmod 000).
  *
  * The human operator must `chmod 600` the file before reading, then delete it.
  * The agent should never access this path — it exists solely as a secure
@@ -74,13 +92,14 @@ async function ensureWalletsDir(): Promise<void> {
  *
  * Returns the absolute path of the dead-drop file.
  */
-export async function writeMnemonicDeadDrop(mnemonic: string): Promise<string> {
+export async function writeMnemonicDeadDrop(name: string, mnemonic: string): Promise<string> {
+  const deadDrop = mnemonicDeadDropPath(name)
   await mkdir(RESPAWN_DIR, { recursive: true, mode: 0o700 })
   // Write with owner-only permissions first, then lock completely.
   // Two-step avoids a window where the file is world-readable.
-  await writeFile(MNEMONIC_DEAD_DROP, mnemonic + '\n', { mode: 0o600 })
-  await chmod(MNEMONIC_DEAD_DROP, 0o000)
-  return MNEMONIC_DEAD_DROP
+  await writeFile(deadDrop, mnemonic + '\n', { mode: 0o600 })
+  await chmod(deadDrop, 0o000)
+  return deadDrop
 }
 
 function keyfilePath(name: string): string {
