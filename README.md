@@ -17,6 +17,12 @@ Each skill lives in its own directory under `autonomys/` with a `SKILL.md` that 
 
 ### auto-memory
 
+[clawhub.ai/jim-counter/auto-memory](https://clawhub.ai/jim-counter/auto-memory)
+
+```bash
+npx clawhub install auto-memory
+```
+
 Permanent decentralized storage via the Autonomys Auto Drive API. Gives your agent:
 
 - **Permanent file storage** — upload any file to the Autonomys Network and get back a CID. The data is distributed across the network and never expires.
@@ -26,6 +32,12 @@ Permanent decentralized storage via the Autonomys Auto Drive API. Gives your age
 auto-memory only needs an Auto Drive API key (free at [ai3.storage](https://ai3.storage)). It's the right starting point for any agent that wants permanent memory.
 
 ### auto-respawn
+
+[clawhub.ai/jim-counter/auto-respawn](https://clawhub.ai/jim-counter/auto-respawn)
+
+```bash
+npx clawhub install auto-respawn
+```
 
 On-chain identity and memory anchoring on the Autonomys Network. Gives your agent:
 
