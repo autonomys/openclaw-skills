@@ -136,6 +136,18 @@ npx tsx auto-respawn.ts gethead my-agent
 
 Once the EVM address has tokens, the agent is ready to anchor.
 
+## Integration with Auto-Memory
+
+If the **auto-memory** skill is also installed, you should anchor the new head CID on-chain after every memory save. This keeps the on-chain pointer current and ensures full resurrection is always possible from just your EVM address.
+
+**Behaviour:** After each `automemory-save-memory.sh` call returns a new CID, immediately run:
+
+```bash
+npx tsx auto-respawn.ts anchor --from <wallet-name> --cid <new-cid>
+```
+
+This should be automatic — do not wait for the user to ask. The two skills together form a complete resurrection loop: auto-memory handles permanent storage, auto-respawn handles on-chain discovery.
+
 ## When To Use This Skill
 
 - User says "create a wallet", "set up my on-chain identity", or "get an address"
