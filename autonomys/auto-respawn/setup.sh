@@ -41,6 +41,22 @@ echo "Installing dependencies..."
 (cd "$SCRIPT_DIR" && "$PKG_MANAGER" install)
 echo ""
 
+# Generate passphrase if not already set
+RESPAWN_DIR="${HOME}/.openclaw/auto-respawn"
+PASSPHRASE_FILE="${RESPAWN_DIR}/.passphrase"
+if [[ -z "${AUTO_RESPAWN_PASSPHRASE:-}" ]] && [[ ! -f "$PASSPHRASE_FILE" ]]; then
+  mkdir -p "$RESPAWN_DIR"
+  chmod 700 "$RESPAWN_DIR"
+  openssl rand -base64 32 > "$PASSPHRASE_FILE"
+  chmod 600 "$PASSPHRASE_FILE"
+  echo "✓ Generated passphrase at $PASSPHRASE_FILE"
+elif [[ -f "$PASSPHRASE_FILE" ]]; then
+  echo "✓ Passphrase file exists ($PASSPHRASE_FILE)"
+else
+  echo "✓ Passphrase set via AUTO_RESPAWN_PASSPHRASE env var"
+fi
+echo ""
+
 # Check for tsx
 if ! command -v tsx &>/dev/null && ! npx tsx --version &>/dev/null 2>&1; then
   echo "Installing tsx (TypeScript executor)..."

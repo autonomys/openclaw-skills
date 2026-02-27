@@ -87,6 +87,8 @@ The desktop app handles this automatically. The CLI does not execute install ste
 
 Before an agent can anchor memories on-chain, it needs a funded wallet. Walk the user through this process:
 
+> **Note:** If you ran `setup.sh`, a passphrase was automatically generated at `~/.openclaw/auto-respawn/.passphrase`. This is used to encrypt/decrypt wallet keyfiles. You can also set `AUTO_RESPAWN_PASSPHRASE` in your environment or bring your own passphrase file.
+
 ### 1. Create a Wallet
 
 ```bash
