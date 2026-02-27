@@ -1,9 +1,9 @@
 ---
 name: auto-respawn
 description: >
-  Anchor agent identity on the Autonomys Network. Create wallets, manage balances,
-  and anchor memory chain CIDs on-chain so your agent can always respawn —
-  even from total state loss.
+  Your agent always comes back. Anchor identity and memory on-chain so any new
+  instance can resurrect from just an address — no local state, no single point
+  of failure. Permanent identity and recovery on the Autonomys Network.
 metadata:
   openclaw:
     emoji: "🔄"
