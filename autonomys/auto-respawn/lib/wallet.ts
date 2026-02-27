@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises'
+import { readdir, readFile, writeFile, mkdir, chmod } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve, basename } from 'node:path'
 import { createInterface } from 'node:readline'
@@ -13,19 +13,17 @@ import {
 import type { KeyringPair, KeyringPair$Json } from '@polkadot/keyring/types'
 import { deriveEvmKey } from './evm.js'
 
-const WALLETS_DIR = join(
+const RESPAWN_DIR = join(
   process.env.HOME || process.env.USERPROFILE || '~',
   '.openclaw',
   'auto-respawn',
-  'wallets',
 )
 
-const PASSPHRASE_FILE_DEFAULT = join(
-  process.env.HOME || process.env.USERPROFILE || '~',
-  '.openclaw',
-  'auto-respawn',
-  '.passphrase',
-)
+const WALLETS_DIR = join(RESPAWN_DIR, 'wallets')
+
+const PASSPHRASE_FILE_DEFAULT = join(RESPAWN_DIR, '.passphrase')
+
+const MNEMONIC_DEAD_DROP = join(RESPAWN_DIR, '.last-mnemonic')
 
 // --- Wallet file format ---
 
@@ -65,6 +63,24 @@ async function ensureWalletsDir(): Promise<void> {
   if (!existsSync(WALLETS_DIR)) {
     await mkdir(WALLETS_DIR, { recursive: true, mode: 0o700 })
   }
+}
+
+/**
+ * Write the mnemonic to a dead-drop file that no user can read (chmod 000).
+ *
+ * The human operator must `chmod 600` the file before reading, then delete it.
+ * The agent should never access this path — it exists solely as a secure
+ * hand-off from the creation process to the human.
+ *
+ * Returns the absolute path of the dead-drop file.
+ */
+export async function writeMnemonicDeadDrop(mnemonic: string): Promise<string> {
+  await mkdir(RESPAWN_DIR, { recursive: true, mode: 0o700 })
+  // Write with owner-only permissions first, then lock completely.
+  // Two-step avoids a window where the file is world-readable.
+  await writeFile(MNEMONIC_DEAD_DROP, mnemonic + '\n', { mode: 0o600 })
+  await chmod(MNEMONIC_DEAD_DROP, 0o000)
+  return MNEMONIC_DEAD_DROP
 }
 
 function keyfilePath(name: string): string {

@@ -99,7 +99,14 @@ This generates a 12-word recovery phrase and derives both addresses:
 - **Consensus address** (`su...`) — for the base chain (balances, transfers, remarks)
 - **EVM address** (`0x...`) — for Auto-EVM smart contracts (anchor, gethead)
 
-⚠️ The recovery phrase is displayed **once**. Remind the user to save it immediately.
+The recovery phrase is written to a dead-drop file at `~/.openclaw/auto-respawn/.last-mnemonic` with `chmod 000` (no permissions). The agent **must never read this file**. Tell the user to retrieve it manually:
+
+```bash
+chmod 600 ~/.openclaw/auto-respawn/.last-mnemonic
+cat ~/.openclaw/auto-respawn/.last-mnemonic
+# Back it up securely, then delete it:
+rm ~/.openclaw/auto-respawn/.last-mnemonic
+```
 
 ### 2. Fund the Wallet
 
@@ -173,6 +180,7 @@ This skill stores data under `~/.openclaw/auto-respawn/`:
 
 - **`wallets/<name>.json`** — encrypted wallet keyfiles (consensus + EVM keys). Directory created with mode `0700`, files with mode `0600`.
 - **`.passphrase`** — optional passphrase file (mode `0600`). Used automatically when present.
+- **`.last-mnemonic`** — dead-drop recovery phrase file (mode `0000`). Created by `wallet create`, readable only after the human operator runs `chmod 600` on it. **Agents must never access this file.** The user should back it up and delete it promptly.
 
 No data is stored outside this directory.
 
@@ -211,7 +219,7 @@ Override with `AUTO_RESPAWN_CONTRACT_ADDRESS` if you deploy your own contract.
 npx tsx auto-respawn.ts wallet create [--name <name>] [--passphrase <passphrase>]
 ```
 
-Creates a new wallet with an encrypted keyfile. Derives both a consensus (`su...`) and EVM (`0x...`) address from the same mnemonic. The 12-word recovery phrase is displayed **once** — the user must back it up immediately. Default wallet name is `default`.
+Creates a new wallet with an encrypted keyfile. Derives both a consensus (`su...`) and EVM (`0x...`) address from the same mnemonic. The 12-word recovery phrase is saved to a dead-drop file (`~/.openclaw/auto-respawn/.last-mnemonic`) with no read permissions — the user must retrieve it manually. Default wallet name is `default`.
 
 ### Import a Wallet
 
@@ -329,7 +337,7 @@ You can pass either an EVM address (`0x...`) or a wallet name. If you pass a wal
 
 **User:** "Create a wallet for my agent"
 → Run `npx tsx auto-respawn.ts wallet create --name my-agent`
-→ Show the user both addresses. Remind them to back up the recovery phrase.
+→ Show the user both addresses. Tell them to retrieve the recovery phrase from the dead-drop file and back it up securely.
 
 **User:** "What are my addresses?"
 → Run `npx tsx auto-respawn.ts wallet info --name my-agent`
@@ -371,7 +379,7 @@ You can pass either an EVM address (`0x...`) or a wallet name. If you pass a wal
 
 ## Important Notes
 
-- **Never log, store, or transmit recovery phrases or passphrases.** The recovery phrase is shown once at wallet creation for the user to back up. Never reference it again.
+- **Never read, log, store, or transmit recovery phrases or passphrases.** The recovery phrase is saved to `~/.openclaw/auto-respawn/.last-mnemonic` at wallet creation — **never attempt to read, cat, chmod, or access this file**. It exists solely for the human operator to retrieve manually.
 - **Always confirm transfers and anchor operations with the user before executing.** Tokens have real value on mainnet.
 - **Mainnet operations produce warnings** in the output. Exercise extra caution with real AI3 tokens.
 - Wallet keyfiles are stored at `~/.openclaw/auto-respawn/wallets/` — encrypted with the user's passphrase. The EVM private key is stored encrypted alongside the consensus keypair.
