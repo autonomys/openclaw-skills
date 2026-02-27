@@ -28,7 +28,7 @@ metadata:
 
 # Auto-Memory Skill
 
-Permanent decentralized storage on the Autonomys Network with linked-list memory chains for agent resurrection. Works with agents powered by Claude, GPT, Gemini, and any LLM that supports OpenClaw skills.
+Permanent decentralized memory on the Autonomys Network with linked-list memory chains for agent resurrection. Works with agents powered by Claude, GPT, Gemini, and any LLM that supports OpenClaw skills.
 
 ## What This Skill Does
 
