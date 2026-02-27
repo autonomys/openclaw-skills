@@ -102,7 +102,7 @@ The wallet needs tokens to pay transaction fees. On **Chronos testnet**, the use
 
 1. Go to **https://autonomysfaucet.xyz/**
 2. Authenticate with GitHub or Discord
-3. Enter the **consensus address** (`su...`) from step 1
+3. Enter the **EVM address** (`0x...`) from step 1
 4. Receive tAI3 (24-hour cooldown between requests)
 
 On **mainnet**, the user needs real AI3 tokens — typically earned through farming or purchased on an exchange.
