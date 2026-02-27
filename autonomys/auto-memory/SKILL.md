@@ -1,6 +1,6 @@
 ---
 name: auto-memory
-description: Upload and download files to permanent decentralized storage on the Autonomys Network via Auto Drive. Save memories as a linked-list chain for resurrection — rebuild full agent context from a single CID.
+description: Indestructible agent memory — permanently stored, never lost. Save decisions, identity, and context as a memory chain on the Autonomys Network. Rebuild your full history from a single CID, even after total state loss.
 metadata:
   openclaw:
     emoji: "🧬"
