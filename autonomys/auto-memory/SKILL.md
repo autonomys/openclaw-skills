@@ -45,6 +45,16 @@ Permanent decentralized memory on the Autonomys Network with linked-list memory 
 - User says "resurrect", "recall chain", "rebuild memory", or "load history"
 - Any time the user wants data stored permanently and immutably on a decentralized network
 
+## Post-Install
+
+After installing via ClawHub, make the scripts executable:
+
+```bash
+chmod +x skills/auto-memory/scripts/*.sh
+```
+
+ClawHub does not currently preserve file permissions during install.
+
 ## Configuration
 
 ### API Key
