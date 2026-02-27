@@ -64,12 +64,15 @@ Use `remark` for permanent breadcrumbs. Use `anchor` for the respawn primitive.
 
 ## Post-Install Setup (CLI Users)
 
-If you installed via `clawhub install` (not the desktop app), you need to install Node.js dependencies before first use:
+If you installed via `clawhub install` (not the desktop app), make the setup script executable and run it:
 
 ```bash
 cd <skill-directory>/autonomys/auto-respawn
+chmod +x setup.sh
 ./setup.sh
 ```
+
+ClawHub does not currently preserve file permissions during install.
 
 Or manually:
 
