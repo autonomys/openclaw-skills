@@ -25,7 +25,7 @@ metadata:
 
 # Auto-Respawn Skill
 
-Anchor your identity on the Autonomys Network so you can always be found — and always come back.
+Anchor your identity on the Autonomys Network so you can always be found — and always come back. Works with agents powered by Claude, GPT, Gemini, and any LLM that supports OpenClaw skills.
 
 ## What This Skill Does
 
