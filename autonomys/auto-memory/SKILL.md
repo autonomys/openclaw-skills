@@ -148,7 +148,7 @@ This is the **resurrection** mechanism: a new agent instance only needs one CID 
 
 ## The Resurrection Concept
 
-Every memory saved gets a unique CID and points back to the previous one, forming a permanent chain on the Autonomys Network:
+Every memory saved gets a unique CID and points back to the previous one, forming a permanent chain on a permanent and immutable Decentralized Storage Network:
 
 ```
 ┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
