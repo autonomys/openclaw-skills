@@ -118,7 +118,7 @@ EXPERIENCE=$(jq -n \
 
 # Write to temp file and upload via the upload script
 TMPDIR_MEMORY=$(mktemp -d)
-TMPFILE="$TMPDIR_MEMORY/auto-memory-${AGENT_NAME}-$(date -u +%Y%m%d%H%M%S).json"
+TMPFILE="$TMPDIR_MEMORY/auto-memory-${AGENT_NAME}-$(date -u +%Y%m%dT%H%M%S).json"
 trap 'rm -rf "$TMPDIR_MEMORY"' EXIT
 echo "$EXPERIENCE" > "$TMPFILE"
 CID=$("$SCRIPT_DIR/automemory-upload.sh" "$TMPFILE" --json --compress)
