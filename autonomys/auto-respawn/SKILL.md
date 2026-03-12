@@ -369,6 +369,31 @@ You can pass either an EVM address (`0x...`) or a wallet name. If you pass a wal
 4. Recover: `npx tsx auto-respawn.ts gethead my-agent` → get CID
 5. Restore: `automemory-recall-chain.sh <cid>` → full memory chain recovered
 
+## Balance Monitoring
+
+The resurrection loop depends on funded wallets. An anchor that fails due to
+insufficient gas is a silent break in the chain — the agent continues saving
+memories via auto-memory, but those memories are not anchored on-chain and
+cannot be discovered via `gethead` after a full state loss.
+
+**Agents should:**
+
+1. **Check EVM balance after each anchor operation.** If the remaining balance
+   drops below ~0.01 AI3 (roughly 10 anchors worth of gas), warn the operator:
+   *"Auto Respawn wallet running low. EVM balance: X AI3. Anchoring will fail
+   without funding. Run `fund-evm` to bridge more tokens."*
+2. **If an anchor fails due to insufficient funds, alert the operator immediately.**
+   Do not silently continue saving memories without anchoring — the resurrection
+   loop is broken and the operator needs to know.
+3. **During periodic checks (heartbeats), verify the wallet is funded** if
+   anchoring is part of the agent's workflow.
+
+**The failure mode to avoid:** saving memories for days or weeks while anchoring
+silently fails, then discovering the gap only when resurrection is actually needed.
+This is a real scenario — not theoretical. An agent can accumulate an entire memory
+chain that is permanently stored but not anchored, meaning `gethead` returns nothing
+and the chain is only recoverable if the local state file survives.
+
 ## Important Notes
 
 - **Never log, store, or transmit recovery phrases or passphrases.** The recovery phrase is shown once at wallet creation for the user to back up. Never reference it again.
@@ -376,6 +401,7 @@ You can pass either an EVM address (`0x...`) or a wallet name. If you pass a wal
 - **Mainnet operations produce warnings** in the output. Exercise extra caution with real AI3 tokens.
 - Wallet keyfiles are stored at `~/.openclaw/auto-respawn/wallets/` — encrypted with the user's passphrase. The EVM private key is stored encrypted alongside the consensus keypair.
 - On-chain operations (transfer, remark, anchor, fund-evm, withdraw) cost transaction fees. The wallet must have a sufficient balance on the relevant layer.
+- **Monitor your wallet balance proactively.** An unfunded wallet means the resurrection loop is silently broken. If an anchor attempt fails due to insufficient EVM balance, alert the operator immediately rather than continuing without anchoring. See [Balance Monitoring](#balance-monitoring) above.
 - All output is structured JSON on stdout. Errors go to stderr.
 - **Consensus explorer** (Subscan): `https://autonomys-chronos.subscan.io/extrinsic/<txHash>` (chronos) or `https://autonomys.subscan.io/extrinsic/<txHash>` (mainnet).
 - **EVM explorer** (Blockscout): `https://explorer.auto-evm.chronos.autonomys.xyz/tx/<txHash>` (chronos) or `https://explorer.auto-evm.mainnet.autonomys.xyz/tx/<txHash>` (mainnet).
