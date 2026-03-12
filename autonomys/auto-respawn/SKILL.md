@@ -369,6 +369,55 @@ You can pass either an EVM address (`0x...`) or a wallet name. If you pass a wal
 4. Recover: `npx tsx auto-respawn.ts gethead my-agent` → get CID
 5. Restore: `automemory-recall-chain.sh <cid>` → full memory chain recovered
 
+## Network Awareness
+
+Auto Respawn supports multiple networks (Chronos testnet and mainnet). It is
+**critical** to record which network your agent is using for anchoring and to
+use the same network consistently.
+
+**The failure mode:** an agent anchors on Chronos during testing, then continues
+using Chronos in production without switching to mainnet — or vice versa. The
+agent believes it has a valid resurrection path, but `gethead` on the wrong
+network returns nothing. The chain exists, but it's anchored on a different
+network than the one being queried.
+
+**Agents should:**
+
+1. **Record the network in use** in persistent configuration or memory files.
+   Don't rely on defaults — be explicit: `--network mainnet` or `--network chronos`.
+2. **Use the same network for all operations** — anchoring, gethead, and balance
+   checks must target the same network.
+3. **When transitioning from testnet to mainnet**, re-anchor the latest CID on
+   mainnet. The CID itself (stored on Auto Drive) is network-agnostic, but the
+   on-chain anchor is network-specific.
+4. **Include the network in any documentation** of your wallet setup — future-you
+   (or a resurrected instance) needs to know where to call `gethead`.
+
+## Balance Monitoring
+
+The resurrection loop depends on funded wallets. An anchor that fails due to
+insufficient gas is a silent break in the chain — the agent continues saving
+memories via auto-memory, but those memories are not anchored on-chain and
+cannot be discovered via `gethead` after a full state loss.
+
+**Agents should:**
+
+1. **Check EVM balance after each anchor operation.** If the remaining balance
+   drops below ~0.01 AI3 (roughly 10 anchors worth of gas), warn the operator:
+   *"Auto Respawn wallet running low. EVM balance: X AI3. Anchoring will fail
+   without funding. Run `fund-evm` to bridge more tokens."*
+2. **If an anchor fails due to insufficient funds, alert the operator immediately.**
+   Do not silently continue saving memories without anchoring — the resurrection
+   loop is broken and the operator needs to know.
+3. **During periodic checks (heartbeats), verify the wallet is funded** if
+   anchoring is part of the agent's workflow.
+
+**The failure mode to avoid:** saving memories for days or weeks while anchoring
+silently fails, then discovering the gap only when resurrection is actually needed.
+This is a real scenario — not theoretical. An agent can accumulate an entire memory
+chain that is permanently stored but not anchored, meaning `gethead` returns nothing
+and the chain is only recoverable if the local state file survives.
+
 ## Important Notes
 
 - **Never log, store, or transmit recovery phrases or passphrases.** The recovery phrase is shown once at wallet creation for the user to back up. Never reference it again.
@@ -376,6 +425,8 @@ You can pass either an EVM address (`0x...`) or a wallet name. If you pass a wal
 - **Mainnet operations produce warnings** in the output. Exercise extra caution with real AI3 tokens.
 - Wallet keyfiles are stored at `~/.openclaw/auto-respawn/wallets/` — encrypted with the user's passphrase. The EVM private key is stored encrypted alongside the consensus keypair.
 - On-chain operations (transfer, remark, anchor, fund-evm, withdraw) cost transaction fees. The wallet must have a sufficient balance on the relevant layer.
+- **Always record and verify which network you are using.** Anchoring on Chronos while expecting to recover from mainnet (or vice versa) is a silent failure. Be explicit with `--network` on every command.
+- **Monitor your wallet balance proactively.** An unfunded wallet means the resurrection loop is silently broken. If an anchor attempt fails due to insufficient EVM balance, alert the operator immediately rather than continuing without anchoring. See [Balance Monitoring](#balance-monitoring) above.
 - All output is structured JSON on stdout. Errors go to stderr.
 - **Consensus explorer** (Subscan): `https://autonomys-chronos.subscan.io/extrinsic/<txHash>` (chronos) or `https://autonomys.subscan.io/extrinsic/<txHash>` (mainnet).
 - **EVM explorer** (Blockscout): `https://explorer.auto-evm.chronos.autonomys.xyz/tx/<txHash>` (chronos) or `https://explorer.auto-evm.mainnet.autonomys.xyz/tx/<txHash>` (mainnet).
