@@ -17,10 +17,10 @@ Each skill lives in its own directory under `autonomys/` with a `SKILL.md` that 
 
 ### auto-memory
 
-[clawhub.ai/jim-counter/auto-memory](https://clawhub.ai/jim-counter/auto-memory)
+[clawhub.ai/0xautonomys/permanent-memory](https://clawhub.ai/0xautonomys/permanent-memory)
 
 ```bash
-npx clawhub install auto-memory
+npx clawhub install permanent-memory
 ```
 
 Permanent decentralized storage via the Autonomys Auto Drive API. Gives your agent:
@@ -33,10 +33,10 @@ auto-memory only needs an Auto Drive API key (free at [ai3.storage](https://ai3.
 
 ### auto-respawn
 
-[clawhub.ai/jim-counter/auto-respawn](https://clawhub.ai/jim-counter/auto-respawn)
+[clawhub.ai/0xautonomys/respawn](https://clawhub.ai/0xautonomys/respawn)
 
 ```bash
-npx clawhub install auto-respawn
+npx clawhub install respawn
 ```
 
 On-chain identity and memory anchoring on the Autonomys Network. Gives your agent:
@@ -81,17 +81,17 @@ Skills are published to [ClawHub](https://docs.openclaw.ai) via `.github/workflo
    - Parses the skill name and version from the tag (strips the `v` prefix — ClawHub expects bare semver like `0.2.0`, not `v0.2.0`)
    - Resolves the skill directory (`autonomys/auto-memory` or `autonomys/auto-respawn`)
    - Validates that `SKILL.md` exists in the directory
-   - Authenticates with ClawHub using the `CLAWHUB_TOKEN` repository secret
-   - Publishes with `npx clawhub publish` including `--tags beta`
+   - Publishes to both ClawHub accounts (primary `0xautonomys` and legacy `jim-counter`)
 
 ### Supported skills
 
-| Tag prefix | Directory | ClawHub slug | Display name |
-|---|---|---|---|
-| `auto-memory/v*` | `autonomys/auto-memory` | `auto-memory` | Auto Memory |
-| `auto-respawn/v*` | `autonomys/auto-respawn` | `auto-respawn` | Auto Respawn |
+| Tag prefix | Directory | Primary slug (0xautonomys) | Legacy slug (jim-counter) | Display name |
+|---|---|---|---|---|
+| `auto-memory/v*` | `autonomys/auto-memory` | `permanent-memory` | `auto-memory` | Auto Memory |
+| `auto-respawn/v*` | `autonomys/auto-respawn` | `respawn` | `auto-respawn` | Auto Respawn |
 
 ### Requirements
 
-- A `CLAWHUB_TOKEN` repository secret must be configured in GitHub
+- `CLAWHUB_TOKEN_0XAUTONOMYS` repository secret — for the primary `0xautonomys` account
+- `CLAWHUB_TOKEN` repository secret — for the legacy `jim-counter` account
 - The tagged commit must contain a valid `SKILL.md` in the skill's directory
