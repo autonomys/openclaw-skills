@@ -70,6 +70,7 @@ jobs:
             --tags "${{ steps.meta.outputs.tags }}"
 
       - name: Publish to ClawHub (jim-counter — legacy)
+        if: always() && steps.meta.outputs.dir != ''
         env:
           CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
         run: |
