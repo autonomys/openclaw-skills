@@ -35,11 +35,15 @@ jobs:
               echo "dir=autonomys/auto-memory" >> "$GITHUB_OUTPUT"
               echo "name=Auto Memory" >> "$GITHUB_OUTPUT"
               echo "tags=memory,persistence,decentralized,autonomys,long-term,openclaw" >> "$GITHUB_OUTPUT"
+              echo "legacy_slug=auto-memory" >> "$GITHUB_OUTPUT"
+              echo "new_slug=permanent-memory" >> "$GITHUB_OUTPUT"
               ;;
             auto-respawn)
               echo "dir=autonomys/auto-respawn" >> "$GITHUB_OUTPUT"
               echo "name=Auto Respawn" >> "$GITHUB_OUTPUT"
               echo "tags=identity,agent-memory,decentralized,autonomys,resurrection,persistence" >> "$GITHUB_OUTPUT"
+              echo "legacy_slug=auto-respawn" >> "$GITHUB_OUTPUT"
+              echo "new_slug=respawn" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "Error: Unknown skill '${{ steps.tag.outputs.skill }}'" >&2
@@ -54,13 +58,24 @@ jobs:
             exit 1
           fi
 
-      - name: Publish to ClawHub
+      - name: Publish to ClawHub (0xautonomys — primary)
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN_0XAUTONOMYS }}
+        run: |
+          npx clawhub login --token "$CLAWHUB_TOKEN" --no-browser
+          npx clawhub publish "${{ steps.meta.outputs.dir }}" \
+            --slug "${{ steps.meta.outputs.new_slug }}" \
+            --name "${{ steps.meta.outputs.name }}" \
+            --version "${{ steps.tag.outputs.version }}" \
+            --tags "${{ steps.meta.outputs.tags }}"
+
+      - name: Publish to ClawHub (jim-counter — legacy)
         env:
           CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
         run: |
           npx clawhub login --token "$CLAWHUB_TOKEN" --no-browser
           npx clawhub publish "${{ steps.meta.outputs.dir }}" \
-            --slug "${{ steps.tag.outputs.skill }}" \
+            --slug "${{ steps.meta.outputs.legacy_slug }}" \
             --name "${{ steps.meta.outputs.name }}" \
             --version "${{ steps.tag.outputs.version }}" \
             --tags "${{ steps.meta.outputs.tags }}"
