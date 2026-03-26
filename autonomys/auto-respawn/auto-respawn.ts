@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { connectApi, disconnectApi, disconnectEvmProvider, resolveNetwork, isMainnet } from './lib/network.js'
-import { createWallet, importWallet, listWallets, loadWallet, getWalletInfo, loadEvmAddress, loadEvmPrivateKey } from './lib/wallet.js'
+import { createWallet, importWallet, listWallets, loadWallet, getWalletInfo, loadEvmAddress, loadEvmPrivateKey, ensureNoStaleMnemonic, writeMnemonicDeadDrop } from './lib/wallet.js'
 import { queryBalance } from './lib/balance.js'
 import { queryEvmBalance } from './lib/evm-balance.js'
 import { transferTokens } from './lib/transfer.js'
@@ -38,24 +38,20 @@ async function handleWallet(subcommand: string | undefined, flags: Record<string
   switch (subcommand) {
     case 'create': {
       const name = flags.name || 'default'
+      // Fail early if a previous mnemonic hasn't been retrieved — before
+      // the wallet keyfile is written, so we don't orphan a wallet.
+      ensureNoStaleMnemonic(name)
       const result = await createWallet(name, flags.passphrase)
-      // Output mnemonic to stderr so it's visible to the user but separable from JSON output
-      console.error('')
-      console.error('=== IMPORTANT: BACKUP YOUR RECOVERY PHRASE ===')
-      console.error('')
-      console.error(`  ${result.mnemonic}`)
-      console.error('')
-      console.error('Write these 12 words down and store them securely.')
-      console.error('This is the ONLY time they will be displayed.')
-      console.error('Anyone with these words can access your wallet.')
-      console.error('')
-      console.error('===============================================')
-      console.error('')
+      // Write mnemonic to a dead-drop file (chmod 000) instead of stderr.
+      // The agent never sees the phrase — only the file path appears in output.
+      const mnemonicPath = await writeMnemonicDeadDrop(name, result.mnemonic)
       output({
         name: result.name,
         address: result.address,
         evmAddress: result.evmAddress,
         keyfilePath: result.keyfilePath,
+        mnemonicPath,
+        message: 'IMPORTANT: Your recovery phrase controls this wallet. It has been saved to the file shown in mnemonicPath. To retrieve it: chmod 600 <path> && cat <path> — back it up securely offline, then delete the file. Anyone with these 12 words has full access to your funds.',
       })
       break
     }
