@@ -1,9 +1,13 @@
 ---
 name: auto-respawn
+version: 1.0.0
+license: Apache-2.0
 description: >
   Your agent always comes back. Anchor identity and memory on-chain so any new
   instance can resurrect from just an address — no local state, no single point
   of failure. Permanent identity and recovery on the Autonomys Network.
+compatibility: Requires Node.js 22+ and npm/npx (runs TypeScript via tsx). Connects to Autonomys consensus RPC, Auto-EVM RPC, and cross-domain messaging endpoints, and signs on-chain transactions using locally encrypted wallet keys. Works with OpenClaw and Hermes agents on macOS and Linux.
+allowed-tools: Bash(npx:*) Bash(npm:*) Bash(node:*) Read Write
 metadata:
   openclaw:
     emoji: "🔄"
@@ -21,6 +25,10 @@ metadata:
         package: "tsx"
         bins: ["tsx"]
         label: "Install tsx (TypeScript executor)"
+  hermes:
+    tags: [identity, wallet, onchain, resurrection, autonomys]
+    category: identity
+    requires_toolsets: [terminal]
 ---
 
 # Auto-Respawn Skill
