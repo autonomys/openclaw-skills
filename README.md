@@ -1,6 +1,6 @@
 # openclaw-skills
 
-OpenClaw skills that give AI agents permanent memory and on-chain identity on the Autonomys Network.
+Agent skills that give AI agents permanent memory and on-chain identity on the Autonomys Network. Compatible with both [OpenClaw](https://openclaw.ai) and [Hermes Agent](https://hermes-agent.nousresearch.com) — they share the [agentskills.io](https://agentskills.io/specification) `SKILL.md` standard.
 
 ## Structure
 
@@ -13,6 +13,10 @@ autonomys/
 
 Each skill lives in its own directory under `autonomys/` with a `SKILL.md` that defines the skill interface, installation steps, and usage instructions.
 
+## Compatibility
+
+Both skills install on **[OpenClaw](https://openclaw.ai)** and **[Hermes Agent](https://hermes-agent.nousresearch.com)** from a single `SKILL.md` each. They follow the [agentskills.io](https://agentskills.io/specification) standard: OpenClaw-specific config lives under `metadata.openclaw` and Hermes-specific config under `metadata.hermes`, so each runtime reads what it needs and ignores the rest. Both skills pass Hermes's pre-install security scanner with a `SAFE` verdict at the community trust tier.
+
 ## Skills
 
 ### auto-memory
@@ -20,7 +24,11 @@ Each skill lives in its own directory under `autonomys/` with a `SKILL.md` that 
 [clawhub.ai/0xautonomys/permanent-memory](https://clawhub.ai/0xautonomys/permanent-memory)
 
 ```bash
+# OpenClaw
 npx clawhub install permanent-memory
+
+# Hermes Agent
+hermes skills install clawhub/0xautonomys/permanent-memory
 ```
 
 Permanent decentralized storage via the Autonomys Auto Drive API. Gives your agent:
@@ -36,7 +44,11 @@ auto-memory only needs an Auto Drive API key (free at [ai3.storage](https://ai3.
 [clawhub.ai/0xautonomys/respawn](https://clawhub.ai/0xautonomys/respawn)
 
 ```bash
+# OpenClaw
 npx clawhub install respawn
+
+# Hermes Agent
+hermes skills install clawhub/0xautonomys/respawn
 ```
 
 On-chain identity and memory anchoring on the Autonomys Network. Gives your agent:
