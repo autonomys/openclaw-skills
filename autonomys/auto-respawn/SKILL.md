@@ -1,6 +1,6 @@
 ---
 name: auto-respawn
-version: 1.0.0
+version: 1.2.0
 license: Apache-2.0
 description: >
   Your agent always comes back. Anchor identity and memory on-chain so any new

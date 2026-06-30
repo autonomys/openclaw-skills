@@ -1,6 +1,6 @@
 ---
 name: auto-memory
-version: 1.0.0
+version: 1.1.0
 license: Apache-2.0
 description: Indestructible agent memory — permanently stored, never lost. Save decisions, identity, and context as a memory chain on the Autonomys Network. Rebuild your full history from a single CID, even after total state loss.
 compatibility: Requires curl, jq, and the file utility, plus outbound HTTPS to the Autonomys Auto Drive API (ai3.storage) and public gateway. Stored data is permanent and public — do not store secrets. Works with OpenClaw and Hermes agents on macOS and Linux.
