@@ -118,10 +118,7 @@ export async function resolvePassphrase(passphrase?: string): Promise<string> {
   )
 }
 
-/**
- * Read all of stdin and return it trimmed. Used for secret input (mnemonic)
- * so the phrase never appears in process argv, `ps`/`/proc`, or shell history.
- */
+// Read all of stdin, trimmed — used for secret input so it never appears in argv.
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = []
   for await (const chunk of process.stdin) {
@@ -130,26 +127,17 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString('utf-8').trim()
 }
 
-/**
- * Resolve a recovery phrase for `wallet import` without exposing it in argv.
- * Resolution order:
- *   0. Explicit argument (the deprecated `--mnemonic` flag; discouraged — argv is
- *      world-readable via `ps`/`/proc` and is saved to shell history)
- *   1. stdin, when useStdin is set (`--mnemonic-stdin`, typically piped/redirected)
- *   2. Interactive prompt, when running in a TTY
- */
+// Resolve a recovery phrase for `wallet import` without exposing it in argv.
 export async function resolveMnemonic(mnemonic?: string, useStdin = false): Promise<string> {
-  // 0. Explicit argument (deprecated; caller emits an argv-exposure warning)
+  // Deprecated flag path; caller emits an argv-exposure warning.
   if (mnemonic) return mnemonic
 
-  // 1. stdin (explicitly requested)
   if (useStdin) {
     const fromStdin = await readStdin()
     if (fromStdin) return fromStdin
     throw new Error('No mnemonic received on stdin.')
   }
 
-  // 2. Interactive prompt
   if (process.stdin.isTTY) {
     return new Promise<string>((resolve, reject) => {
       const rl = createInterface({ input: process.stdin, output: process.stderr })

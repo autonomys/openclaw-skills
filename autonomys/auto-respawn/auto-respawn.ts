@@ -22,11 +22,7 @@ function error(message: string, code = 1): never {
   process.exit(code)
 }
 
-/**
- * Warn when a secret is passed as a command-line argument. Argv is world-readable
- * via `ps`/`/proc` and is saved to shell history, so this leaks the secret to other
- * local users/processes. The flags still work for backward compatibility.
- */
+// Warn that passing a secret via a CLI flag exposes it (ps/proc, shell history).
 function warnSecretArgv(flag: string): void {
   console.error(
     `Warning: passing a secret via ${flag} exposes it in process listings (ps), /proc, ` +
@@ -78,9 +74,6 @@ async function handleWallet(subcommand: string | undefined, flags: Record<string
       if (!name) error('--name is required for wallet import')
       if (flags.mnemonic) warnSecretArgv('--mnemonic')
       if (flags.passphrase) warnSecretArgv('--passphrase')
-      // Read the recovery phrase without exposing it in argv: the deprecated
-      // --mnemonic flag still works, but stdin (--mnemonic-stdin) or an
-      // interactive prompt is preferred.
       let mnemonic: string
       try {
         mnemonic = await resolveMnemonic(flags.mnemonic, flags['mnemonic-stdin'] === 'true')
