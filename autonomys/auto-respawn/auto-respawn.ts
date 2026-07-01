@@ -74,9 +74,7 @@ async function handleWallet(subcommand: string | undefined, flags: Record<string
       if (!name) error('--name is required for wallet import')
       if (flags.mnemonic) warnSecretArgv('--mnemonic')
       if (flags.passphrase) warnSecretArgv('--passphrase')
-      // --mnemonic-stdin is a boolean flag that reads the phrase from stdin. An
-      // attached value would sit in argv (the exposure we're avoiding), so reject
-      // it rather than silently ignore it.
+      // Reject (don't silently ignore) an attached value — it would sit in argv.
       const stdinFlag = flags['mnemonic-stdin']
       if (stdinFlag !== undefined && stdinFlag !== 'true') {
         error(
