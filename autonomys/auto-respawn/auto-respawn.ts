@@ -74,9 +74,19 @@ async function handleWallet(subcommand: string | undefined, flags: Record<string
       if (!name) error('--name is required for wallet import')
       if (flags.mnemonic) warnSecretArgv('--mnemonic')
       if (flags.passphrase) warnSecretArgv('--passphrase')
+      // --mnemonic-stdin is a boolean flag that reads the phrase from stdin. An
+      // attached value would sit in argv (the exposure we're avoiding), so reject
+      // it rather than silently ignore it.
+      const stdinFlag = flags['mnemonic-stdin']
+      if (stdinFlag !== undefined && stdinFlag !== 'true') {
+        error(
+          '--mnemonic-stdin takes no value; it reads the recovery phrase from standard input. ' +
+            'The value you passed is exposed in process listings and shell history — remove it and pipe the phrase via stdin instead.',
+        )
+      }
       let mnemonic: string
       try {
-        mnemonic = await resolveMnemonic(flags.mnemonic, flags['mnemonic-stdin'] === 'true')
+        mnemonic = await resolveMnemonic(flags.mnemonic, stdinFlag === 'true')
       } catch (err) {
         error(err instanceof Error ? err.message : String(err))
       }
