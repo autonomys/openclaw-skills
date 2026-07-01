@@ -1,6 +1,6 @@
 ---
 name: auto-respawn
-version: 1.2.0
+version: 1.2.1
 license: Apache-2.0
 description: >
   Your agent always comes back. Anchor identity and memory on-chain so any new
@@ -188,12 +188,13 @@ No data is stored outside this directory.
 
 Wallet operations that involve signing (transfers, remarks, anchoring) or creating/importing wallets require a passphrase to encrypt/decrypt the wallet keyfile. Resolution order:
 
-1. **Flag:** `--passphrase your_passphrase` on `wallet create` or `wallet import`
-2. **Environment:** `AUTO_RESPAWN_PASSPHRASE`
-3. **File:** `AUTO_RESPAWN_PASSPHRASE_FILE` (defaults to `~/.openclaw/auto-respawn/.passphrase`)
-4. **Interactive:** If running in a terminal, you'll be prompted
+1. **Environment:** `AUTO_RESPAWN_PASSPHRASE`
+2. **File:** `AUTO_RESPAWN_PASSPHRASE_FILE` (defaults to `~/.openclaw/auto-respawn/.passphrase`, mode `0600`)
+3. **Interactive:** If running in a terminal, you'll be prompted
 
-The `--passphrase` flag is useful for scripted or headless setups where you want to create a wallet in a single command. For signing operations (transfers, anchoring, etc.), use the environment variable or file methods. On shared machines, prefer the passphrase file (with restricted permissions) over environment variables.
+Use the passphrase file on shared machines and the env var for headless/scripted setups.
+
+> **Avoid the `--passphrase` flag.** It still works for backward compatibility, but command-line arguments are visible to other local users via `ps`/`/proc` and are saved to shell history. The CLI prints a warning when it is used. Prefer the env var, the passphrase file, or the interactive prompt.
 
 ### Network
 
@@ -216,7 +217,7 @@ Override with `AUTO_RESPAWN_CONTRACT_ADDRESS` if you deploy your own contract.
 ### Create a Wallet
 
 ```bash
-npx tsx auto-respawn.ts wallet create [--name <name>] [--passphrase <passphrase>]
+npx tsx auto-respawn.ts wallet create [--name <name>]
 ```
 
 Creates a new wallet with an encrypted keyfile. Derives both a consensus (`su...`) and EVM (`0x...`) address from the same mnemonic. The 12-word recovery phrase is displayed **once** — the user must back it up immediately. Default wallet name is `default`.
@@ -224,10 +225,14 @@ Creates a new wallet with an encrypted keyfile. Derives both a consensus (`su...
 ### Import a Wallet
 
 ```bash
-npx tsx auto-respawn.ts wallet import --name <name> --mnemonic "<12 words>" [--passphrase <passphrase>]
+# Interactive — you'll be prompted for the recovery phrase (not passed as an argument):
+npx tsx auto-respawn.ts wallet import --name <name>
+
+# Scripted/headless — read the phrase from stdin instead of argv:
+npx tsx auto-respawn.ts wallet import --name <name> --mnemonic-stdin < recovery-phrase.txt
 ```
 
-Import an existing wallet from a recovery phrase. Derives and stores the EVM address.
+Import an existing wallet from a recovery phrase. The phrase is read from an interactive prompt, or from stdin with `--mnemonic-stdin` — never pass it as a command-line argument, which would expose it via `ps`, `/proc`, and shell history. Derives and stores the EVM address.
 
 ### List Wallets
 

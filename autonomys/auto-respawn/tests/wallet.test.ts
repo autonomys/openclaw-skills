@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { resolvePassphrase } from '../lib/wallet.js'
+import { resolvePassphrase, resolveMnemonic } from '../lib/wallet.js'
 
 describe('resolvePassphrase', () => {
   const originalEnv = process.env.AUTO_RESPAWN_PASSPHRASE
@@ -31,5 +31,17 @@ describe('resolvePassphrase', () => {
   it('throws when no passphrase source is available (non-TTY)', async () => {
     // No argument, no env var, no file, and not a TTY — should throw
     await expect(resolvePassphrase()).rejects.toThrow(/No passphrase found/)
+  })
+})
+
+describe('resolveMnemonic', () => {
+  it('returns the explicit argument when provided (deprecated flag path)', async () => {
+    const result = await resolveMnemonic('word '.repeat(11) + 'word')
+    expect(result).toBe('word '.repeat(11) + 'word')
+  })
+
+  it('throws with stdin guidance when no source and non-TTY', async () => {
+    // No argument, useStdin not set, and not a TTY under vitest — should throw
+    await expect(resolveMnemonic()).rejects.toThrow(/--mnemonic-stdin|run interactively/)
   })
 })

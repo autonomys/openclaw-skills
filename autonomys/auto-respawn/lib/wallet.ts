@@ -119,6 +119,56 @@ export async function resolvePassphrase(passphrase?: string): Promise<string> {
 }
 
 /**
+ * Read all of stdin and return it trimmed. Used for secret input (mnemonic)
+ * so the phrase never appears in process argv, `ps`/`/proc`, or shell history.
+ */
+async function readStdin(): Promise<string> {
+  const chunks: Buffer[] = []
+  for await (const chunk of process.stdin) {
+    chunks.push(Buffer.from(chunk))
+  }
+  return Buffer.concat(chunks).toString('utf-8').trim()
+}
+
+/**
+ * Resolve a recovery phrase for `wallet import` without exposing it in argv.
+ * Resolution order:
+ *   0. Explicit argument (the deprecated `--mnemonic` flag; discouraged — argv is
+ *      world-readable via `ps`/`/proc` and is saved to shell history)
+ *   1. stdin, when useStdin is set (`--mnemonic-stdin`, typically piped/redirected)
+ *   2. Interactive prompt, when running in a TTY
+ */
+export async function resolveMnemonic(mnemonic?: string, useStdin = false): Promise<string> {
+  // 0. Explicit argument (deprecated; caller emits an argv-exposure warning)
+  if (mnemonic) return mnemonic
+
+  // 1. stdin (explicitly requested)
+  if (useStdin) {
+    const fromStdin = await readStdin()
+    if (fromStdin) return fromStdin
+    throw new Error('No mnemonic received on stdin.')
+  }
+
+  // 2. Interactive prompt
+  if (process.stdin.isTTY) {
+    return new Promise<string>((resolve, reject) => {
+      const rl = createInterface({ input: process.stdin, output: process.stderr })
+      rl.question('Recovery phrase: ', (answer) => {
+        rl.close()
+        const trimmed = answer.trim()
+        if (!trimmed) reject(new Error('No mnemonic provided'))
+        else resolve(trimmed)
+      })
+    })
+  }
+
+  throw new Error(
+    'No mnemonic provided. Pipe the recovery phrase via stdin with --mnemonic-stdin ' +
+      '(e.g. `... wallet import --name <name> --mnemonic-stdin < phrase.txt`), or run interactively.',
+  )
+}
+
+/**
  * Encrypt both keys (consensus + EVM) and persist the wallet file.
  *
  * Shared by createWallet and importWallet — any change to the file format,
